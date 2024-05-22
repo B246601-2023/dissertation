@@ -1,4 +1,6 @@
 import os
+import time
+import random
 import argparse
 import dendropy
 import toytree
@@ -21,6 +23,14 @@ def main(params):
                          params.sd_step)
     reps = params.reps
     out = params.out
+
+    # seed random number generator
+    if params.seed is not None:
+        np.random.seed(params.seed)
+        random.seed(params.seed+1)
+    else:
+        np.random.seed(int(time.time()))
+        np.random.seed(int(time.time())+1)
 
     # make any intermediate output directories needed
     os.makedirs(os.path.dirname(out), exist_ok=True)
@@ -206,5 +216,7 @@ if __name__ == "__main__":
                         help="Number of extant tips in the tree.")
     parser.add_argument('--out', type=str, required=False, default="out",
                         help="Output file prefix.")
+    parser.add_argument('--seed', type=int, required=False,
+                        help="Seed for random number generator.")
     args = parser.parse_args()
     main(args)
