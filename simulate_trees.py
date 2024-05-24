@@ -49,7 +49,7 @@ def main(params):
     # simulate sequences
 
 
-def simulate_trees(birth_rate=1.0, death_rate=0.5, num_tips=100,
+def simulate_trees(birth_rate=1.0, num_tips=100,
                    sd_range=[0.0], reps=1, out=""):
     """
     Simulates and optionally saves a series of phylogenetic trees with varying
@@ -77,17 +77,25 @@ def simulate_trees(birth_rate=1.0, death_rate=0.5, num_tips=100,
     for sd in sd_range:
         sd = round(sd, 3)
         for r in range(1, reps + 1):
-            tree = treesim.birth_death_tree(
-                birth_rate=birth_rate,
-                death_rate=0.0,
-                birth_rate_sd=sd,
-                num_extant_tips=num_tips,
-                repeat_until_success=True
-            )
+            valid_tree = False
+            while not valid_tree:
+                tree = dendropy.simulate.birth_death_tree(
+                    birth_rate=birth_rate,
+                    death_rate=0.0,
+                    birth_rate_sd=sd,
+                    num_extant_tips=num_tips,
+                    repeat_until_success=True
+                )
+                # Check for negative branch lengths
+                valid_tree = all(edge.length is None or edge.length >= 0 for edge in tree.edges())
+                if not valid_tree:  # If any length is negative, repeat simulation
+                    continue
+            
             name = f"{out}_s{sd}_r{r}"
             filename = f"{name}.tre"
             tree.write(path=filename, schema="newick")
             trees.append((tree, name))
+    
     return trees
 
 
