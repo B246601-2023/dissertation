@@ -44,8 +44,9 @@ def main(params):
         plot_trees(trees, out=out)
 
     # plot some metrics of tree shape/imbalance
-    plot_tree_stats(trees, out=out)
-
+    df=plot_tree_stats(trees, out=out)
+    # try to select some trees by colless
+    trees = select_trees(df,out)
     # simulate sequences
 
 
@@ -122,6 +123,7 @@ def plot_tree_stats(trees, out="out"):
             "Nbar": nbar
         })
     df = pd.DataFrame(data)
+    #df.to_csv(f"{out}_statistics.csv")
 
     # dynamic sized plot 
     metrics = [col for col in df.columns if col not in ['SD', 'Replicate']]
@@ -143,6 +145,45 @@ def plot_tree_stats(trees, out="out"):
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     plt.savefig(f"{out}_stat_plots.pdf")
     plt.close()
+    return(df)
+
+def select_trees(df, out):
+    # sort sd and get the unique values
+    sd_values = sorted(df['SD'].unique())
+    #print(f"all sd values:\n{sd_values}")
+    selected_trees = []
+    last_colless = None  # store the colless value of the last selected tree
+
+    for i, sd in enumerate(sd_values):
+        # select data for current 'sd' group
+        current_group = df[df['SD'] == sd]
+        #print(f"current sd group : {current_group}")
+        if i == 0:
+            # for the first group: select the tree with min colless value
+            selected_tree = current_group.loc[current_group['Colless'].idxmin()]
+            last_colless = selected_tree['Colless']
+        elif i == len(sd_values) - 1:
+            # for the last group: select the tree with max colless value
+            selected_tree = current_group.loc[current_group['Colless'].idxmax()]
+        else:
+            # for other groups: select a appropriate one
+            next_max = df[df['SD'] == sd_values[i + 1]]['Colless'].max()
+            valid_trees = current_group[(current_group['Colless'] > last_colless) & (current_group['Colless'] < next_max)]
+
+            if valid_trees.empty:
+                raise ValueError(f"No valid tree found for sd={sd} with Colless greater than {last_colless} and less than {next_max}")
+
+            # select appropriate tree
+            selected_tree = valid_trees.sort_values(by='Colless', ascending=True).iloc[0]
+            last_colless = selected_tree['Colless']
+
+        # generate tree name and print out
+        tree_name = f"{out}_s{(selected_tree['SD'])}_r{int(selected_tree['Replicate'])}.tre"
+        selected_trees.append(tree_name)
+        print(tree_name)
+    return selected_trees
+
+
 
 
 def parse_name(name):
