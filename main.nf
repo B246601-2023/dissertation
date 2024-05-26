@@ -24,7 +24,7 @@ process simulateTrees {
     val out 
 
     output:
-    path "*tre" 
+    path "*" 
 
     script:
     """
@@ -43,7 +43,7 @@ process selectAndCleanTrees {
 
     script:
     """
-    python /home/weiwen/code/select_trees.py --input /home/weiwen/code/results/trees --out selected_trees
+    python /home/weiwen/code/select_trees.py --input /home/weiwen/code/results/trees --out selected_trees --select trees_selected_trees.txt
     """
 }
 

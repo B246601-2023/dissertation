@@ -46,7 +46,7 @@ def main(params):
     # plot some metrics of tree shape/imbalance
     df=plot_tree_stats(trees, out=out)
     # try to select some trees by colless
-    trees = select_trees(df,out)
+    select_trees(df,out)
     # simulate sequences
 
 
@@ -148,40 +148,49 @@ def plot_tree_stats(trees, out="out"):
     return(df)
 
 def select_trees(df, out):
-    # sort sd and get the unique values
+    # Sort sd and get the unique values
     sd_values = sorted(df['SD'].unique())
-    #print(f"all sd values:\n{sd_values}")
     selected_trees = []
-    last_colless = None  # store the colless value of the last selected tree
+    last_colless = None  # Store the colless value of the last selected tree
 
     for i, sd in enumerate(sd_values):
-        # select data for current 'sd' group
-        current_group = df[df['SD'] == sd]
-        #print(f"current sd group : {current_group}")
+        # Select data for current 'sd' group
+        current_group = df[df['SD'] == sd].sort_values(by='Colless', ascending=True).reset_index(drop=True)
+        
         if i == 0:
-            # for the first group: select the tree with min colless value
-            selected_tree = current_group.loc[current_group['Colless'].idxmin()]
+            # For the first group: select the tree with min colless value
+            selected_tree = current_group.iloc[0]
             last_colless = selected_tree['Colless']
         elif i == len(sd_values) - 1:
-            # for the last group: select the tree with max colless value
-            selected_tree = current_group.loc[current_group['Colless'].idxmax()]
+            # For the last group: select the tree with max colless value
+            selected_tree = current_group.iloc[-1]
         else:
-            # for other groups: select a appropriate one
-            next_max = df[df['SD'] == sd_values[i + 1]]['Colless'].max()
-            valid_trees = current_group[(current_group['Colless'] > last_colless) & (current_group['Colless'] < next_max)]
+            # For other groups: find an appropriate tree
+            median_index = len(current_group) // 2
+            selected_tree = current_group.iloc[median_index]
 
-            if valid_trees.empty:
-                raise ValueError(f"No valid tree found for sd={sd} with Colless greater than {last_colless} and less than {next_max}")
+            # Check if selected tree's colless value is greater than the last selected tree's colless value
+            if selected_tree['Colless'] <= last_colless:
+                # Find a valid tree that has a greater colless value than the last selected tree
+                valid_trees = current_group.iloc[median_index:].query('Colless > @last_colless')
+                if valid_trees.empty:
+                    print(f"No valid tree found for sd={sd} that is greater than the last selected tree's colless value.")
+                    continue  # Skip to the next group without updating last_colless
+                selected_tree = valid_trees.iloc[0]
 
-            # select appropriate tree
-            selected_tree = valid_trees.sort_values(by='Colless', ascending=True).iloc[0]
             last_colless = selected_tree['Colless']
 
-        # generate tree name and print out
-        tree_name = f"{out}_s{(selected_tree['SD'])}_r{int(selected_tree['Replicate'])}.tre"
+        # Generate tree file name and add to the list
+        tree_name = f"{out}_s{selected_tree['SD']}_r{int(selected_tree['Replicate'])}.tre"
         selected_trees.append(tree_name)
-        print(tree_name)
-    return selected_trees
+
+# save names of selected trees
+    n_selected = len(selected_trees)
+    print(f"{n_selected} trees are selected.")
+    with open(f"{out}_selected_trees.txt", 'w') as file:
+        for tree in selected_trees:
+            file.write(tree + '\n')
+
 
 
 
