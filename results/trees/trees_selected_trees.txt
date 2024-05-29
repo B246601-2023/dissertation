@@ -1,0 +1,8 @@
+./trees_s0.0_r3.tre
+./trees_s0.1_r5.tre
+./trees_s0.2_r1.tre
+./trees_s0.4_r1.tre
+./trees_s0.5_r2.tre
+./trees_s0.6_r5.tre
+./trees_s0.8_r5.tre
+./trees_s1.0_r2.tre
