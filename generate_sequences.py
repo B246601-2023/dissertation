@@ -21,7 +21,7 @@ mutation_rates = {
 
 # function to ajdust branch length
 # eg. 0.5x 1x(origin) 10x 100x 
-def adjust_branch_lengths(tree_file, factors=[0.1, 1, 10, 100]):
+def adjust_branch_lengths(tree_file, factors=[0.01, 0.1, 0.5, 1, 5, 10, 1000]):
     
     scaled_trees = {}
     name, _ = os.path.splitext(os.path.basename(tree_file))

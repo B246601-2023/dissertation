@@ -117,7 +117,7 @@ def main():
     args = parser.parse_args()
     tree = getTree(args.tree)
     df_sample,df_box = calculate_phylogenetic_distance(tree)
-    scales = [0.1, 1, 10, 100]
+    scales = [0.01, 0.1, 0.5, 1, 5, 10, 1000]
     name, _ = os.path.splitext(os.path.basename(args.tree))
     plot_distances(name,df_sample,df_box,scales,args.fasta_dir)
 
