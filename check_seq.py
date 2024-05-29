@@ -5,13 +5,16 @@ import pandas as pd
 import argparse
 import matplotlib.pyplot as plt
 
-def calculate_phylogenetic_distance(input_path):
-    data = []
+def getTree(input_path):
     tree = dendropy.Tree.get(
         path=input_path,
         schema="newick",
         tree_offset=None,
         )
+    return tree
+
+def calculate_phylogenetic_distance(tree):
+    data = []
     pdc = tree.phylogenetic_distance_matrix()
     for i, t1 in enumerate(tree.taxon_namespace[:-1]):
         for t2 in tree.taxon_namespace[i+1:]:
@@ -22,17 +25,18 @@ def calculate_phylogenetic_distance(input_path):
             })
     
     df = pd.DataFrame(data)
-
-    # 根据'Phylogenetic Distance'排序数据
     df_sorted = df.sort_values(by='Phylogenetic Distance')
-
-    # 等距选择20个样本
+    
+    #choose 20 sample for Phylogenetic Distance-Hamming plot
     if len(df_sorted) > 20:
         step = len(df_sorted) // 20
         df_sampled = df_sorted.iloc[::step].head(20)
     else:
         df_sampled = df_sorted
-    return df_sampled
+    
+    # 20 samples
+    df_box = df.sort_values(by='Phylogenetic Distance', ascending=False).head(20)
+    return df_sampled,df_box
 
 def hamming_distance(seq1, seq2):
     if len(seq1) != len(seq2):
@@ -76,26 +80,46 @@ def calculate_distances(fasta_file, df):
 
     return pd.DataFrame(results)
 
-def plot_distances(input,df):
-    name, _ = os.path.splitext(os.path.basename(input))
-    df = df.dropna()  # Remove any rows with None values
-    plt.scatter(df['Phylogenetic Distance'], df['Hamming Distance'])
-    plt.xlabel('Phylogenetic Distance')
-    plt.ylabel('Hamming Distance')
-    plt.title('Phylogenetic vs Hamming Distance')
-    plt.grid(True)
+def plot_distances(name, df_sample, df_box, scales,fasta_dir):
+    fig, ax = plt.subplots(1, 2, figsize=(14, 7))
+    
+    hamming = calculate_distances(f"{fasta_dir}/{name}_scale1_seqfile.fasta", df_sample)
+    # Plot phylogenetic vs Hamming distance
+    ax[0].scatter(hamming['Phylogenetic Distance'], hamming['Hamming Distance'])
+    ax[0].set_xscale("log")
+    ax[0].set_xlabel('Phylogenetic Distance')
+    ax[0].set_ylabel('Hamming Distance')
+    ax[0].set_title('Phylogenetic vs Hamming Distance')
+    ax[0].grid(True)
+
+    # Boxplot of different scales
+    distance = []
+    for x in scales :
+        df = calculate_distances(f"{fasta_dir}/{name}_scale{x}_seqfile.fasta", df_box)
+        distance.append([d for d in df['Hamming Distance'] if d is not None])
+    
+    scale_labels = [f"{x}x" for x in scales]
+    #distances = [calculate_distances(f"{fasta_dir}/{name}_scale{x}_seqfile.fasta", df_box) for x in scales]
+    ax[1].boxplot(distance, patch_artist=True, labels=scale_labels)
+    ax[1].set_xlabel('Scale Factor')
+    ax[1].set_ylabel('Hamming Distance')
+    ax[1].set_title('Hamming Distance at Different Scales')
+    ax[1].grid(True)
+
     plt.savefig(f"{name}_phplot.pdf")
 
 def main():
     parser = argparse.ArgumentParser(description="Calculate phylogenetic distances between all pairs of taxa in a tree and save to CSV.")
     parser.add_argument('--tree', type=str, help="Input path of the Newick tree file")
-    parser.add_argument('--fasta', type=str, help="Input path of the fasta file")
+    parser.add_argument('--fasta_dir', type=str, help="Input path of the fasta file")
 
     #parser.add_argument('output_path', type=str, help="Output path for the CSV file")
     args = parser.parse_args()
-    df = calculate_phylogenetic_distance(args.tree)
-    res = calculate_distances(args.fasta,df)
-    plot_distances(args.tree,res)
+    tree = getTree(args.tree)
+    df_sample,df_box = calculate_phylogenetic_distance(tree)
+    scales = [0.1, 1, 10, 100]
+    name, _ = os.path.splitext(os.path.basename(args.tree))
+    plot_distances(name,df_sample,df_box,scales,args.fasta_dir)
 
 if __name__ == "__main__":
     main()

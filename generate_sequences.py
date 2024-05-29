@@ -57,7 +57,7 @@ def adjust_branch_lengths(tree_file, factors=[0.1, 1, 10, 100]):
 def generate_sequences(tree_dict, out_dir, mutation_rates):
     for name, tree in tree_dict.items():
         model = pyvolve.Model("nucleotide", {"mu": mutation_rates})
-        partition = pyvolve.Partition(models=model, size=1000)  # Using a size of 10,000 as an example
+        partition = pyvolve.Partition(models=model, size=20000)  # Using a size of 10,000 as an example
         evolver = pyvolve.Evolver(tree=tree, partitions=partition)
         # Ensure output directory exists
         os.makedirs(out_dir, exist_ok=True)

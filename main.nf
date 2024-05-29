@@ -65,6 +65,23 @@ process generateSequences {
     """
 }
 
+process checkSequences {
+    publishDir "${params.output_dir}/check_plots", mode: 'copy'
+
+    input:
+    path fasta_files
+
+    output:
+    path "*"
+
+    script:
+    """
+    for tree in /home/weiwen/code/results/selected_trees/*.tre; do
+        python /home/weiwen/code/check_seq.py --tree \$tree --fasta_dir /home/weiwen/code/results/sequences
+    done
+    """
+}
+
 workflow {
     num_tips = params.num_tips
     sd_min = params.sd_min
@@ -88,7 +105,11 @@ workflow {
         tree_files=tree_files
     )
     
-    generateSequences(
+    sequences = generateSequences(
         selected_tree_files=selected_tree_files
+    )
+
+    checkSequences(
+        fasta_files = sequences
     )
 }
