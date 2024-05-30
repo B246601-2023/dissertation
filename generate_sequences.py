@@ -31,29 +31,6 @@ def adjust_branch_lengths(tree_file, factors=[0.01, 0.1, 0.5, 1, 5, 10, 1000]):
     
     return scaled_trees
 
-
-# def generate_sequences(tree_file, out, mutation_rate_sets):
-    
-#     #read file
-#     mytree = pyvolve.read_tree(file = tree_file)
-    
-#     for name, rates in mutation_rate_sets.items():
-#         # set a model
-#         mymodel = pyvolve.Model(
-#             "nucleotide",
-#             {"mu": rates},
-#             alpha=0.5, num_categories=3, pinv=0.25
-#         )
-
-#         my_partition = pyvolve.Partition(models=mymodel, size=100) # save time, should be 20000
-#         evolver = pyvolve.Evolver(tree=mytree, partitions=my_partition)
-        
-
-#         os.makedirs(os.path.dirname(out), exist_ok=True)
-
-#         # generate file and save
-#         evolver(ratefile=f"{out}_{name}_ratefile.txt", infofile=f"{out}_{name}_infofile.txt", seqfile=f"{out}_{name}_seqfile.fasta")
-
 def generate_sequences(tree_dict, out_dir, mutation_rates):
     for name, tree in tree_dict.items():
         model = pyvolve.Model("nucleotide", {"mu": mutation_rates})
@@ -62,7 +39,7 @@ def generate_sequences(tree_dict, out_dir, mutation_rates):
         # Ensure output directory exists
         os.makedirs(out_dir, exist_ok=True)
         out_path = os.path.join(out_dir, name)
-        evolver(ratefile=f"{out_path}_ratefile.txt", infofile=f"{out_path}_infofile.txt", seqfile=f"{out_path}_seqfile.fasta")    
+        evolver(ratefile=f"{out_path}_ratefile.txt", infofile=f"{out_path}_infofile.txt", seqfile=f"{out_path}_seqfile.fasta", write_anc = True)    
 
 def main():
     parser = argparse.ArgumentParser(description="Generate sequences from a phylogenetic tree with specific mutation rates.")

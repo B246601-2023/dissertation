@@ -47,6 +47,22 @@ process selectAndCleanTrees {
     """
 }
 
+process rescaleTrees {
+    publishDir "${params.output_dir}", mode: 'copy'
+
+    input:
+    path selected_tree_files
+
+    output:
+    path "all_trees/*tre" 
+
+    script:
+    """
+    python /home/weiwen/code/rescale_branch_length.py --input_dir /home/weiwen/code/results/selected_trees --out all_trees
+    """
+
+}
+
 process generateSequences {
     publishDir "${params.output_dir}", mode: 'copy'
 
@@ -105,6 +121,10 @@ workflow {
         tree_files=tree_files
     )
     
+    all_trees = rescaleTrees(
+        selected_tree_files = selected_tree_files
+    )
+
     sequences = generateSequences(
         selected_tree_files=selected_tree_files
     )
