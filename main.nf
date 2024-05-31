@@ -98,6 +98,23 @@ process checkSequences {
     """
 }
 
+process extractSequence {
+    conda 'usher-env.yml'
+    publishDir "${params.output_dir}", mode: 'copy'
+
+    input:
+    path fasta_file
+    
+
+    output:
+    path "ref/*_root.fa"
+
+    script:
+    """
+    python /home/weiwen/code/extract_fasta.py --input ${fasta_file} --out_dir ref --target_sequence root
+    """
+}
+
 workflow {
     num_tips = params.num_tips
     sd_min = params.sd_min
@@ -128,6 +145,12 @@ workflow {
     sequences = generateSequences(
         selected_tree_files=selected_tree_files
     )
+
+    
+    extracted_sequences = Channel.fromPath('/home/weiwen/code/results/sequences/*.fasta')
+    extractSequence(
+        fasta_file=extracted_sequences
+        )
 
     checkSequences(
         fasta_files = sequences
