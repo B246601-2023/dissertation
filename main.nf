@@ -139,6 +139,24 @@ process generateAlignments {
     """
 }
 
+process generateVcfs {
+    conda '/home/weiwen/envs/usher-env'
+
+    publishDir "${params.output_dir}/vcf", mode: 'copy'
+
+    input:
+    path align  
+
+    output:
+    path "*"
+
+    script:
+    """
+    base_name=\$(basename ${align} .fa)
+    vcf_file="\${base_name/_seqfile_align/.vcf}"
+    faToVcf ${align} \${vcf_file}
+    """
+}
 
 
 workflow {
@@ -172,27 +190,13 @@ workflow {
         selected_tree_files=selected_tree_files
     )
 
-    
-    // extracted_sequences = Channel.fromPath('/home/weiwen/code/results/sequences/*.fasta')
-    // extractSequence(
-    //     fasta_file=extracted_sequences
-    //     )
-
     checkSequences(
         fasta_files = sequences
     )
 
     refs = extractSequence(fasta_file = sequences.flatten())
 
-    generateAlignments(fasta_file=sequences.flatten(), ref = refs)
-    // root_files = extracted_sequences.collect()
+    align = generateAlignments(fasta_file=sequences.flatten(), ref = refs)
 
-    // alignments = sequences
-    //     .map { file -> tuple(file, root_files.find { it.contains(file.baseName) }) }
-    //     .flatMap { tuple -> 
-    //         generateAlignments(fasta_file: tuple[0], root_fasta: tuple[1])
-    //     }
-    // generateAlignments(
-    //     fasta_file = extracted_sequences
-    // )
+    vcf = generateVcfs(align = align.flatten())
 }
