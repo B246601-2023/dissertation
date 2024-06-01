@@ -158,6 +158,25 @@ process generateVcfs {
     """
 }
 
+process generatePbs {
+    conda '/home/weiwen/envs/usher-env'
+
+    publishDir "${params.output_dir}/pb", mode: 'copy'
+
+    input:
+    path vcf  
+
+    output:
+    path "*"
+
+    script:
+    """
+    base_name=\$(basename ${vcf} .vcf)
+    tree_name="\${base_name}.tre"
+    pb_name="\${base_name}.pb"
+    usher -t /home/weiwen/code/results/all_trees/\${tree_name} -v ${vcf} -o \${pb_name}
+    """
+}
 
 workflow {
     num_tips = params.num_tips
@@ -199,4 +218,6 @@ workflow {
     align = generateAlignments(fasta_file=sequences.flatten(), ref = refs)
 
     vcf = generateVcfs(align = align.flatten())
+
+    pb = generatePbs(vcf = vcf)
 }
