@@ -11,6 +11,7 @@ params.sd_step = 0.1
 params.reps = 5
 params.seed = 42
 
+
 process simulateTrees {
     publishDir "${params.output_dir}/trees", mode: 'copy'
 
@@ -28,7 +29,7 @@ process simulateTrees {
 
     script:
     """
-    python /home/weiwen/code/simulate_trees.py --num_tips ${num_tips} --sd_min ${sd_min} --sd_max ${sd_max} --sd_step ${sd_step} --reps ${reps} --out ${out} --seed ${seed}
+    python3 /home/weiwen/code/simulate_trees.py --num_tips ${num_tips} --sd_min ${sd_min} --sd_max ${sd_max} --sd_step ${sd_step} --reps ${reps} --out ${out} --seed ${seed}
     """
 }
 
@@ -43,7 +44,7 @@ process selectAndCleanTrees {
 
     script:
     """
-    python /home/weiwen/code/select_trees.py --input /home/weiwen/code/results/trees --out selected_trees --select trees_selected_trees.txt
+    python3 /home/weiwen/code/select_trees.py --input /home/weiwen/code/results/trees --out selected_trees --select trees_selected_trees.txt
     """
 }
 
@@ -58,7 +59,7 @@ process rescaleTrees {
 
     script:
     """
-    python /home/weiwen/code/rescale_branch_length.py --input_dir /home/weiwen/code/results/selected_trees --out all_trees
+    python3 /home/weiwen/code/rescale_branch_length.py --input_dir /home/weiwen/code/results/selected_trees --out all_trees
     """
 
 }
@@ -76,7 +77,7 @@ process generateSequences {
     """
     mkdir -p sequences
     for tree in /home/weiwen/code/results/selected_trees/*.tre; do
-        python /home/weiwen/code/generate_sequences.py --tree \$tree --out "sequences/"
+        python3 /home/weiwen/code/generate_sequences.py --tree \$tree --out "sequences/"
     done
     """
 }
@@ -93,13 +94,14 @@ process checkSequences {
     script:
     """
     for tree in /home/weiwen/code/results/selected_trees/*.tre; do
-        python /home/weiwen/code/check_seq.py --tree \$tree --fasta_dir /home/weiwen/code/results/sequences
+        python3 /home/weiwen/code/check_seq.py --tree \$tree --fasta_dir /home/weiwen/code/results/sequences
     done
     """
 }
 
 process extractSequence {
-    conda 'usher-env.yml'
+    conda '/home/weiwen/envs/tree'
+
     publishDir "${params.output_dir}", mode: 'copy'
 
     input:
@@ -111,9 +113,33 @@ process extractSequence {
 
     script:
     """
-    python /home/weiwen/code/extract_fasta.py --input ${fasta_file} --out_dir ref --target_sequence root
+    python3 /home/weiwen/code/extract_fasta.py --input ${fasta_file} --out_dir ref --target_sequence root
     """
 }
+
+process generateAlignments {
+    conda '/home/weiwen/envs/usher-env'
+
+    publishDir "${params.output_dir}/align", mode: 'copy'
+
+    input:
+    path fasta_file
+    path ref
+    
+
+    output:
+    path "*"
+
+    script:
+    """
+    base_name=\$(basename ${fasta_file} .fasta)
+    align_fasta="\${base_name}_align.fa"
+    root_fasta="\${base_name}_root.fa"
+    mafft --thread 10 --auto --keeplength --addfragments ${fasta_file} /home/weiwen/code/results/ref/\${root_fasta} > \${align_fasta}
+    """
+}
+
+
 
 workflow {
     num_tips = params.num_tips
@@ -147,12 +173,26 @@ workflow {
     )
 
     
-    extracted_sequences = Channel.fromPath('/home/weiwen/code/results/sequences/*.fasta')
-    extractSequence(
-        fasta_file=extracted_sequences
-        )
+    // extracted_sequences = Channel.fromPath('/home/weiwen/code/results/sequences/*.fasta')
+    // extractSequence(
+    //     fasta_file=extracted_sequences
+    //     )
 
     checkSequences(
         fasta_files = sequences
     )
+
+    refs = extractSequence(fasta_file = sequences.flatten())
+
+    generateAlignments(fasta_file=sequences.flatten(), ref = refs)
+    // root_files = extracted_sequences.collect()
+
+    // alignments = sequences
+    //     .map { file -> tuple(file, root_files.find { it.contains(file.baseName) }) }
+    //     .flatMap { tuple -> 
+    //         generateAlignments(fasta_file: tuple[0], root_fasta: tuple[1])
+    //     }
+    // generateAlignments(
+    //     fasta_file = extracted_sequences
+    // )
 }
