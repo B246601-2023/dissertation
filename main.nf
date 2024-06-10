@@ -29,7 +29,7 @@ process simulateTrees {
 
     script:
     """
-    python3 /home/weiwen/code/simulate_trees.py --num_tips ${num_tips} --sd_min ${sd_min} --sd_max ${sd_max} --sd_step ${sd_step} --reps ${reps} --out ${out} --seed ${seed}
+    python3 ${projectDir}/simulate_trees.py --num_tips ${num_tips} --sd_min ${sd_min} --sd_max ${sd_max} --sd_step ${sd_step} --reps ${reps} --out ${out} --seed ${seed}
     """
 }
 
@@ -44,7 +44,7 @@ process selectAndCleanTrees {
 
     script:
     """
-    python3 /home/weiwen/code/select_trees.py --input /home/weiwen/code/results/trees --out selected_trees --select trees_selected_trees.txt
+    python3 ${projectDir}/select_trees.py --input ${projectDir}/results/trees --out selected_trees --select trees_selected_trees.txt
     """
 }
 
@@ -59,7 +59,7 @@ process rescaleTrees {
 
     script:
     """
-    python3 /home/weiwen/code/rescale_branch_length.py --input_dir /home/weiwen/code/results/selected_trees --out all_trees
+    python3 ${projectDir}/rescale_branch_length.py --input_dir ${projectDir}/results/selected_trees --out all_trees
     """
 
 }
@@ -76,8 +76,8 @@ process generateSequences {
     script:
     """
     mkdir -p sequences
-    for tree in /home/weiwen/code/results/selected_trees/*.tre; do
-        python3 /home/weiwen/code/generate_sequences.py --tree \$tree --out "sequences/"
+    for tree in ${projectDir}/results/selected_trees/*.tre; do
+        python3 ${projectDir}/generate_sequences.py --tree \$tree --out "sequences/"
     done
     """
 }
@@ -93,8 +93,8 @@ process checkSequences {
 
     script:
     """
-    for tree in /home/weiwen/code/results/selected_trees/*.tre; do
-        python3 /home/weiwen/code/check_seq.py --tree \$tree --fasta_dir /home/weiwen/code/results/sequences
+    for tree in ${projectDir}/results/selected_trees/*.tre; do
+        python3 ${projectDir}/check_seq.py --tree \$tree --fasta_dir ${projectDir}/results/sequences
     done
     """
 }
@@ -113,12 +113,14 @@ process extractSequence {
 
     script:
     """
-    python3 /home/weiwen/code/extract_fasta.py --input ${fasta_file} --out_dir ref --target_sequence root
+    python3 ${projectDir}/extract_fasta.py --input ${fasta_file} --out_dir ref --target_sequence root
     """
 }
 
 process generateAlignments {
     conda '/home/weiwen/envs/usher-env'
+    cpus 2
+    memory '6 GB'
 
     publishDir "${params.output_dir}/align", mode: 'copy'
 
@@ -135,7 +137,7 @@ process generateAlignments {
     base_name=\$(basename ${fasta_file} .fasta)
     align_fasta="\${base_name}_align.fa"
     root_fasta="\${base_name}_root.fa"
-    mafft --thread 10 --auto --keeplength --addfragments ${fasta_file} /home/weiwen/code/results/ref/\${root_fasta} > \${align_fasta}
+    mafft --thread 2 --auto --keeplength --addfragments ${fasta_file} /home/weiwen/code/results/ref/\${root_fasta} > \${align_fasta}
     """
 }
 
@@ -174,7 +176,7 @@ process generatePbs {
     base_name=\$(basename ${vcf} .vcf)
     tree_name="\${base_name}.tre"
     pb_name="\${base_name}.pb"
-    usher -t /home/weiwen/code/results/all_trees/\${tree_name} -v ${vcf} -o \${pb_name}
+    usher -t ${projectDir}/results/all_trees/\${tree_name} -v ${vcf} -o \${pb_name}
     """
 }
 

@@ -37,7 +37,7 @@ def main():
     args = parser.parse_args()
 
     # Process all tree files in the directory with the given scale factors
-    scale_factors = [0.01, 0.1, 0.5, 1, 5, 10, 1000]
+    scale_factors = [0.0001, 0.001, 0.01, 0.1, 1.0, 10.0]
     for x in scale_factors:
         process_trees(args.input_dir, args.output_dir, x)
 
