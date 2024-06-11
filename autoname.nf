@@ -86,15 +86,32 @@ process autolin_check{
     path txt_file
 
     output:
+    path "*.csv" 
+    path "modified_tree/*", emit: trees
+
+    script:
+    """
+    name=\$(basename ${txt_file} .txt)
+    python3 ${projectDir}/autolin_compare.py --input ${txt_file} --output \${name}.csv --tree_dir ${projectDir}/results/annotated_trees_nh 
+    """
+}
+
+process colorTree{
+    conda '/home/weiwen/envs/tree'
+
+    publishDir "${params.output_dir}/color_trees", mode: 'copy'
+
+    input:
+    path tree
+
+    output:
     path "*"
 
     script:
     """
-    name=\$(basename ${txt_file} .pb)
-    python3 ${projectDir}/autolin_compare.py --input ${txt_file} --output \${name}.csv
+    python3 ${projectDir}/color_tree.py --input ${tree} 
     """
 }
-
 
 workflow {
     pb_files = Channel.fromPath("${projectDir}/results/pb/*.pb")
@@ -106,5 +123,7 @@ workflow {
 
     annotations = extract_txt(pb_file = annotated_trees_pb.flatten())
 
-    check_results = autolin_check(txt_file = annotations.flatten())
+    check_results= autolin_check(txt_file = annotations.flatten())
+
+    plots = colorTree(tree = check_results.trees.flatten())
 }

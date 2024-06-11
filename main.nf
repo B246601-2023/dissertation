@@ -109,76 +109,15 @@ process extractSequence {
     
 
     output:
-    path "ref/*_root.fa"
+    path "ref/*.fa"
+    path "sequences_clean/*"
 
     script:
     """
-    python3 ${projectDir}/extract_fasta.py --input ${fasta_file} --out_dir ref --target_sequence root
+    python3 ${projectDir}/extract_fasta.py --input ${fasta_file} --out_dir ref --seq_dir sequences_clean --target_sequence root
     """
 }
 
-process generateAlignments {
-    conda '/home/weiwen/envs/usher-env'
-    cpus 2
-    memory '6 GB'
-
-    publishDir "${params.output_dir}/align", mode: 'copy'
-
-    input:
-    path fasta_file
-    path ref
-    
-
-    output:
-    path "*"
-
-    script:
-    """
-    base_name=\$(basename ${fasta_file} .fasta)
-    align_fasta="\${base_name}_align.fa"
-    root_fasta="\${base_name}_root.fa"
-    mafft --thread 2 --auto --keeplength --addfragments ${fasta_file} /home/weiwen/code/results/ref/\${root_fasta} > \${align_fasta}
-    """
-}
-
-process generateVcfs {
-    conda '/home/weiwen/envs/usher-env'
-
-    publishDir "${params.output_dir}/vcf", mode: 'copy'
-
-    input:
-    path align  
-
-    output:
-    path "*"
-
-    script:
-    """
-    base_name=\$(basename ${align} .fa)
-    vcf_file="\${base_name/_seqfile_align/.vcf}"
-    faToVcf ${align} \${vcf_file}
-    """
-}
-
-process generatePbs {
-    conda '/home/weiwen/envs/usher-env'
-
-    publishDir "${params.output_dir}/pb", mode: 'copy'
-
-    input:
-    path vcf  
-
-    output:
-    path "*"
-
-    script:
-    """
-    base_name=\$(basename ${vcf} .vcf)
-    tree_name="\${base_name}.tre"
-    pb_name="\${base_name}.pb"
-    usher -t ${projectDir}/results/all_trees/\${tree_name} -v ${vcf} -o \${pb_name}
-    """
-}
 
 workflow {
     num_tips = params.num_tips
@@ -215,11 +154,11 @@ workflow {
         fasta_files = sequences
     )
 
-    refs = extractSequence(fasta_file = sequences.flatten())
+    extractSequence(fasta_file = sequences.flatten())
 
-    align = generateAlignments(fasta_file=sequences.flatten(), ref = refs)
+    //align = generateAlignments(fasta_file=sequences.flatten(), ref = refs)
 
-    vcf = generateVcfs(align = align.flatten())
+    //vcf = generateVcfs(align = align.flatten())
 
-    pb = generatePbs(vcf = vcf)
+    //pb = generatePbs(vcf = vcf)
 }
