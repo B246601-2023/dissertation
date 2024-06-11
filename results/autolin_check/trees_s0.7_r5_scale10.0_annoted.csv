@@ -1,0 +1,12 @@
+clade,root_id
+L,node_1
+L.1,node_4
+L.1.2,node_5
+L.1.1,node_27
+L.1.1.3,node_29
+L.1.1.1,node_41
+L.1.1.2,node_59
+L.1.1.4,node_85
+L.1.1.1.1,node_42
+L.1.1.2.1,node_60
+L.1.1.2.2,node_75

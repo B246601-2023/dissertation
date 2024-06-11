@@ -1,0 +1,10 @@
+clade	root_id	from_tree_root
+L	node_1	
+auto.L.1	node_44	 > G151T,T800G
+auto.L.2	node_20	 >  > C525T,G537T,T997G > 
+auto.L.1.3	node_63	 > G151T,T800G >  > 
+auto.L.3	node_5	 >  >  > C972T > 
+auto.L.1.1	node_86	 > G151T,T800G > T314G,C500T,C555T >  > C751T
+auto.L.2.1	node_22	 >  > C525T,G537T,T997G >  >  > T282G,T446G,T750C,T802G
+auto.L.1.2	node_48	 > G151T,T800G >  > A39T,C735T >  > G604T
+auto.L.1.1.1	node_87	 > G151T,T800G > T314G,C500T,C555T >  > C751T > 

@@ -1,0 +1,9 @@
+clade	root_id	from_tree_root
+L	node_1	
+auto.L.1	node_7	 > T481G,T729C > T17C,T531G,T644C > T94C,G829A > T963C > 
+auto.L.1.3	node_75	 > T481G,T729C > T17C,T531G,T644C > T94C,G829A > T963C >  > C204T,T323G
+auto.L.1.2	node_9	 > T481G,T729C > T17C,T531G,T644C > T94C,G829A > T963C >  >  > 
+auto.L.1.2.2	node_10	 > T481G,T729C > T17C,T531G,T644C > T94C,G829A > T963C >  >  >  > T428G
+auto.L.1.2.1	node_25	 > T481G,T729C > T17C,T531G,T644C > T94C,G829A > T963C >  >  >  >  > 
+auto.L.1.1	node_48	 > T481G,T729C > T17C,T531G,T644C > T94C,G829A > T963C >  >  >  > A673G >  >  >  > T120G > G964T
+auto.L.1.1.1	node_50	 > T481G,T729C > T17C,T531G,T644C > T94C,G829A > T963C >  >  >  > A673G >  >  >  > T120G > G964T >  > 

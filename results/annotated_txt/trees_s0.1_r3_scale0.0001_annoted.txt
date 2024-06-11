@@ -1,0 +1,9 @@
+clade	root_id	from_tree_root
+L	node_1	
+auto.L.3	node_9	 >  >  > 
+auto.L.5	node_72	 >  >  > 
+auto.L.4	node_89	 >  >  > 
+auto.L.5.1	node_73	 >  >  >  > C370T
+auto.L.2	node_43	 >  >  >  >  > 
+auto.L.1	node_24	 >  >  >  >  >  >  > 
+auto.L.1.1	node_25	 >  >  >  >  >  >  >  > 

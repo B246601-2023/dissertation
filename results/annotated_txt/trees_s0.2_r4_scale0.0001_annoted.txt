@@ -1,0 +1,10 @@
+clade	root_id	from_tree_root
+L	node_1	
+auto.L.3	node_34	 >  > 
+auto.L.2	node_49	 >  >  > 
+auto.L.2.2	node_76	 >  >  >  >  > 
+auto.L.1	node_13	 >  >  > C90T >  >  >  > 
+auto.L.2.1	node_54	 >  >  >  >  >  >  > 
+auto.L.2.2.1	node_78	 >  >  >  >  >  >  > 
+auto.L.1.1	node_15	 >  >  > C90T >  >  >  >  >  > 
+auto.L.2.1.1	node_56	 >  >  >  >  >  >  >  >  > 

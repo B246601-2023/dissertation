@@ -1,0 +1,10 @@
+clade	root_id	from_tree_root
+L	node_1	
+auto.L.2	node_58	 >  >  >  >  > 
+auto.L.1	node_25	 >  >  >  >  >  > 
+auto.L.2.2	node_59	 >  >  >  >  >  > 
+auto.L.2.1	node_69	 >  >  >  >  >  > 
+auto.L.2.1.2	node_83	 >  >  >  >  >  >  > G552T
+auto.L.1.2	node_40	 >  >  >  >  >  >  >  > 
+auto.L.2.1.1	node_73	 >  >  >  >  >  >  >  > 
+auto.L.1.1	node_28	 >  >  >  >  >  >  >  >  > 

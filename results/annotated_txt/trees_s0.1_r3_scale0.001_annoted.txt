@@ -1,0 +1,9 @@
+clade	root_id	from_tree_root
+L	node_1	
+auto.L.3	node_9	 >  > T203C > T221C
+auto.L.5	node_72	 >  >  > 
+auto.L.4	node_89	 >  >  > 
+auto.L.5.1	node_73	 >  >  >  > 
+auto.L.2	node_43	 >  > T675G >  >  > 
+auto.L.1	node_24	 >  > T675G >  >  >  > G903A > 
+auto.L.1.1	node_25	 >  > T675G >  >  >  > G903A >  > 

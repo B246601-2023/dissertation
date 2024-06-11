@@ -1,2 +1,0 @@
-#Name	Cardinality
-results/sequences/trees_s0.4_r4_scale10_seqfile.fasta	1891694.56444398360326886

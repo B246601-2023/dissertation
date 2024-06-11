@@ -1,0 +1,9 @@
+clade	root_id	from_tree_root
+L	node_1	
+auto.L.1	node_7	 >  >  >  > C339T > 
+auto.L.1.3	node_75	 >  >  >  > C339T >  > 
+auto.L.1.2	node_9	 >  >  >  > C339T >  >  > 
+auto.L.1.2.2	node_10	 >  >  >  > C339T >  >  >  > 
+auto.L.1.2.1	node_25	 >  >  >  > C339T >  >  >  >  > 
+auto.L.1.1	node_49	 >  >  >  > C339T >  >  >  >  >  >  >  >  >  > 
+auto.L.1.1.1	node_50	 >  >  >  > C339T >  >  >  >  >  >  >  >  >  >  > 

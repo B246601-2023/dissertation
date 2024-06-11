@@ -1,0 +1,10 @@
+clade	root_id	from_tree_root
+L	node_1	
+auto.L.1	node_15	 >  >  >  > A539G >  >  > 
+auto.L.1.3	node_22	 >  >  >  > A539G >  >  >  > T902C > 
+auto.L.1.1	node_43	 >  >  >  > A539G >  >  >  >  >  > 
+auto.L.1.4	node_90	 >  >  >  > A539G >  >  >  >  >  > 
+auto.L.1.1.1	node_53	 >  >  >  > A539G >  >  >  >  >  >  > 
+auto.L.1.2	node_66	 >  >  >  > A539G >  >  >  >  >  >  > 
+auto.L.1.2.2	node_67	 >  >  >  > A539G >  >  >  >  >  >  >  > 
+auto.L.1.2.1	node_77	 >  >  >  > A539G >  >  >  >  >  >  >  > 

@@ -1,0 +1,10 @@
+clade	root_id	from_tree_root
+L	node_1	
+auto.L.3	node_34	 > G588T,T606C > T459C
+auto.L.2	node_49	 >  > T180G > 
+auto.L.2.2	node_76	 >  > T180G >  > C941T > 
+auto.L.1	node_13	 > G588T,T606C >  >  >  >  > T984C > 
+auto.L.2.1	node_54	 >  > T180G >  >  >  > T374C > 
+auto.L.2.2.1	node_78	 >  > T180G >  > C941T >  > T864G > 
+auto.L.1.1	node_15	 > G588T,T606C >  >  >  >  > T984C >  > C748T > 
+auto.L.2.1.1	node_56	 >  > T180G >  >  >  > T374C >  >  > 

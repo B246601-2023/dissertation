@@ -1,0 +1,8 @@
+clade	root_id	from_tree_root
+L	node_1	
+auto.L.1	node_8	 >  >  >  > 
+auto.L.2	node_57	 >  >  >  >  > 
+auto.L.2.2	node_58	 >  >  >  >  >  > 
+auto.L.2.1	node_71	 >  >  >  >  >  >  > 
+auto.L.2.1.1	node_75	 >  >  >  >  >  >  >  > 
+auto.L.1.1	node_32	 >  >  >  >  >  >  >  >  > 

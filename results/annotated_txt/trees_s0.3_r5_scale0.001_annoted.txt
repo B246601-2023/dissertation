@@ -1,0 +1,10 @@
+clade	root_id	from_tree_root
+L	node_1	
+auto.L.2	node_58	 >  >  >  >  > C194T
+auto.L.1	node_25	 >  >  >  >  > G737T > 
+auto.L.2.2	node_59	 >  >  >  >  > C194T > 
+auto.L.2.1	node_69	 >  >  >  >  > C194T > 
+auto.L.2.1.2	node_83	 >  >  >  >  > C194T >  > 
+auto.L.1.2	node_40	 >  >  >  >  > G737T >  >  > 
+auto.L.2.1.1	node_73	 >  >  >  >  > C194T >  >  > 
+auto.L.1.1	node_28	 >  >  >  >  > G737T >  >  >  > T87C
