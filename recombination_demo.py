@@ -111,7 +111,7 @@ def main():
     args = parser.parse_args()
 
     # 所有树的RL_close采用相同的重组率，RL_far在不同的树中使用不同的重组率，在划定区间内根据二项分布概率选择概率，并判断属于低/高哪一个区间
-    recombination_rate_close = 2.0e-5
+    recombination_rate_close = 2.0e-4
     num_recombinants = 6
     basename = os.path.basename(args.tree).replace("_annoted.nh","") #tree/fasta name preparation
     fasta_name = os.path.join(args.fasta_dir,basename+"_seqfile.fa")
@@ -126,25 +126,20 @@ def main():
     close_recombinants = generate_recombinant_sequences(sequences, recombination_rate_close, num_recombinants, "close", lineage_list)
     
     # decide the recombination rates for 'far' group
-    recombination_rates_far = [random.uniform(5.0e-7, 5.0e-5) for _ in range(3)]
     far_recombinants = []
     
-    low_range = (5.0e-7, 1e-6)
-    mid_range = (1e-6, 1e-5)
-    high_range = (1e-5, 5.0e-4)  
+    mid_range = (1e-5, 1e-4)
+    high_range = (1e-4, 5.0e-3)  
 
     # 从每个范围内均匀分布随机抽取一个重组率
-    low_rate = random.uniform(*low_range)
     mid_rate = random.uniform(*mid_range)
     high_rate = random.uniform(*high_range)
-    for rate in low_rate,mid_rate,high_rate:
-        if rate >= 1e-5:
+    for rate in mid_rate,high_rate:
+        if rate >= 1e-4:
             group = "high"
-        elif rate <= 1e-6:
-            group = "low"
         else:
             group = "medium"
-        recombinants = generate_recombinant_sequences(sequences, rate, 2, group, lineage_list)
+        recombinants = generate_recombinant_sequences(sequences, rate, 3, group, lineage_list)
         far_recombinants.extend(recombinants)
 
     all_recombinants = close_recombinants + far_recombinants
