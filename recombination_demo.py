@@ -6,6 +6,8 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 import pandas as pd
 import argparse
+import itertools
+import math
 
 # parse tree file first, to get all lineage-tips relationship
 
@@ -49,11 +51,8 @@ def group_sequences(lineage_list, lineage_name, sequences):
         seq_list.append(sequences[value])
     return seq_list
 
-def simulate_recombination(parent1, parent2, recombination_rate):
-    length = len(parent1)
-    num_recombination_events = int(length * recombination_rate)
-    
-    recombination_points = sorted(random.sample(range(1, length), num_recombination_events))
+def simulate_recombination(parent1, parent2, num_event):
+    recombination_points = sorted(random.sample(range(1, len(parent1)), num_event))
     
     new_seq = ""
     switch = False
@@ -70,35 +69,53 @@ def simulate_recombination(parent1, parent2, recombination_rate):
     new_seq += parent2[last_point:] if switch else parent1[last_point:]
     return new_seq
 
-def generate_recombinant_sequences(sequences, recombination_rate, num_recombinants, group, lineage_list):
-    recombinants = []
-    l1_seq = group_sequences(lineage_list, "L.1", sequences)
+def generate_recombinant_sequences(sequences, rep, group, lineage_list):
+    # get the number of recombinants 
+    if group == "low":
+        prob = 0.12
+    elif group == "high":
+        prob = 0.50
+    
+    #unique_lineages = lineage_list['lineage_name'].unique()
+    lineage_num = lineage_list['Lineage'].unique().shape[0]
+    #print(f"all lineages num : {lineage_num}")
+    recombinant_num = math.floor((1 - prob) * (prob * lineage_num)) 
+    #print(f"recombinant_num:{recombinant_num}")
+    if recombinant_num == 0:
+        recombinant_num = 1
 
-    # decide l2 list according to group
-    if group == "close":
-        l2_seq = group_sequences(lineage_list, "L.2", sequences)
-        group_name = "L.1XL.2"
-    elif group in ["high", "low", "medium"]:
-        Lname = lineage_list.Lineage.iloc[-1]
-        l2_seq = group_sequences(lineage_list, Lname, sequences)
-        group_name = f"L.1X{Lname}_{group}"
+    # decide which lineages are used to generate recombinants
+    unique_lineages = lineage_list['Lineage'].unique()
+    all_combinations = list(itertools.combinations(unique_lineages, 2))
+    #print(f"all_combine:{all_combinations}")
+    re_lineage = random.sample(all_combinations, recombinant_num)
+
+    # list to restore recombinants
+    recombinants = []
+    # get sequence list according to different combinations
+    for tuple in re_lineage :
+        l1_seq = group_sequences(lineage_list, tuple[0], sequences)
+        l2_seq = group_sequences(lineage_list, tuple[1], sequences)
+        group_name = f"{tuple[0]}X{tuple[1]}_{group}"
 
     # generate repeated recombinants
-    for i in range(num_recombinants):
-        parent1 = random.sample(l1_seq, 1)[0]
-        parent2 = random.sample(l2_seq, 1)[0]
-        new_seq_str = simulate_recombination(str(parent1.seq), str(parent2.seq), recombination_rate)
-        new_seq = Seq(new_seq_str)
-        recombinant_id = f"RL_{group_name}_{i+1}"
-        recombinant = SeqRecord(new_seq, id=recombinant_id, description=f"recombination rate : {recombination_rate}\trecombination_group:{group}")
-        recombinants.append(recombinant)
+        for i in range(rep):
+            parent1 = random.sample(l1_seq, 1)[0]
+            parent2 = random.sample(l2_seq, 1)[0]
+            events_range = (1,5)
+            new_seq_str = simulate_recombination(str(parent1.seq), str(parent2.seq), random.choice(events_range))
+            new_seq = Seq(new_seq_str)
+            recombinant_id = f"{group_name}_{i+1}"
+            recombinant = SeqRecord(new_seq, id=recombinant_id, description=f"recombination_group:{group}")
+            recombinants.append(recombinant)
+    
     return recombinants
 
 # add recombinants information to lineage lists
 def add_recombinant_info(recombinants,lineage_list):
     for rec in recombinants:
         rec_id = rec.id
-        lineage = rec.id.split("_")[1].strip()
+        lineage = rec.id.split("_")[0].strip()
         lineage_list.loc[len(lineage_list.index)] = [lineage,rec_id]
     return lineage_list
 
@@ -109,10 +126,7 @@ def main():
     parser.add_argument('--fasta_dir', type=str, required=True, help="Input fasta file dir")
     #parser.add_argument('--out', type=str, required=True, help="Output file name")
     args = parser.parse_args()
-
-    # 所有树的RL_close采用相同的重组率，RL_far在不同的树中使用不同的重组率，在划定区间内根据二项分布概率选择概率，并判断属于低/高哪一个区间
-    recombination_rate_close = 2.0e-4
-    num_recombinants = 6
+    # file name preparation
     basename = os.path.basename(args.tree).replace("_annoted.nh","") #tree/fasta name preparation
     fasta_name = os.path.join(args.fasta_dir,basename+"_seqfile.fa")
     out_fasta = basename+"_seqfile.fa"
@@ -121,28 +135,11 @@ def main():
     # parse tree file
     lineage_list = find_lineages_and_tips(args.tree)
     sequences = read_sequences(fasta_name)
-    
-    # generate 'close' recombinants
-    close_recombinants = generate_recombinant_sequences(sequences, recombination_rate_close, num_recombinants, "close", lineage_list)
-    
-    # decide the recombination rates for 'far' group
-    far_recombinants = []
-    
-    mid_range = (1e-5, 1e-4)
-    high_range = (1e-4, 5.0e-3)  
 
-    # 从每个范围内均匀分布随机抽取一个重组率
-    mid_rate = random.uniform(*mid_range)
-    high_rate = random.uniform(*high_range)
-    for rate in mid_rate,high_rate:
-        if rate >= 1e-4:
-            group = "high"
-        else:
-            group = "medium"
-        recombinants = generate_recombinant_sequences(sequences, rate, 3, group, lineage_list)
-        far_recombinants.extend(recombinants)
-
-    all_recombinants = close_recombinants + far_recombinants
+    # generate 'low' and 'high' recombinants
+    low_recombinants = generate_recombinant_sequences(sequences,3,"low",lineage_list)
+    high_recombinants = generate_recombinant_sequences(sequences,3,"high",lineage_list)
+    all_recombinants = low_recombinants + high_recombinants
     
     for recombinant in all_recombinants:
         sequences[recombinant.id] = recombinant
