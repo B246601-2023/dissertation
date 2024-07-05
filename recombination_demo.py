@@ -141,10 +141,12 @@ def main():
     high_recombinants = generate_recombinant_sequences(sequences,3,"high",lineage_list)
     all_recombinants = low_recombinants + high_recombinants
     
-    for recombinant in all_recombinants:
-        sequences[recombinant.id] = recombinant
+    # for recombinant in all_recombinants:
+    #     sequences[recombinant.id] = recombinant
 
-    write_sequences(list(sequences.values()), out_fasta)
+    output_sequences = [sequences['root']]  # Start with the 'root' sequence
+    output_sequences += all_recombinants   # Add all recombinant sequences
+    write_sequences(output_sequences, out_fasta)
     
     # update lineages csv and save
     lineage_list = add_recombinant_info(all_recombinants,lineage_list)
