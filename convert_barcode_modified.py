@@ -34,20 +34,25 @@ def parse_tree_paths(df):
     
     results = {}
     for index, row in df.iterrows():
-        #deal with the last node, named as index
-        mutations=[]
-        last_node = index+":"
-        mutations.append(row['from_tree_root'].split(last_node)[-1].strip())
+        mutations = []
+        last_node = index + ":"
         
-        nodes=row['from_tree_root'].split(last_node)[0].split('node_')[1:]
+        # check if last_node is in the row
+        if last_node in row['from_tree_root']:
+            split_result = row['from_tree_root'].split(last_node)
+            mutations.append(split_result[-1].strip())
+            nodes = split_result[0].split('node_')[1:]
+        else:
+            nodes = row['from_tree_root'].split('node_')[1:]
+        
         for node in nodes:
             mutations.append(node.split(':')[-1].strip())
 
         results[index] = [mutations]
-        #df_result.loc[index, 'from_tree_root'] = ','.join(mutations)
         
     df_result = pd.DataFrame.from_dict(results, orient='index', columns=['from_tree_root'])
     return df_result
+
 
 
 def sortFun(x):
@@ -90,19 +95,24 @@ def convert_to_barcodes(df):
     return df_barcodes
 
 
+
 def reversion_checking(df_barcodes):
-    print('checking for mutation pairs')
-    # check if a reversion is present.
-    flipPairs = [(d, d[-1] + d[1:len(d)-1]+d[0]) for d in df_barcodes.columns
-                 if (d[-1] + d[1:len(d)-1]+d[0]) in df_barcodes.columns]
+    print('Checking for mutation pairs')
+    flipPairs = [(d, d[-1] + d[1:len(d)-1] + d[0]) for d in df_barcodes.columns if (d[-1] + d[1:len(d)-1] + d[0]) in df_barcodes.columns]
     flipPairs = [list(fp) for fp in list(set(flipPairs))]
-    # subtract lower of two pair counts to get the lineage defining mutations
+
+    print("Flip pairs found:", flipPairs)
+    print("DataFrame shape before operation:", df_barcodes.shape)
+
     for fp in flipPairs:
-        df_barcodes[fp] = df_barcodes[fp].subtract(df_barcodes[fp].min(axis=1),
-                                                   axis=0)
-    # drop all unused mutations (i.e. paired mutations with reversions)
-    df_barcodes = df_barcodes.drop(
-        columns=df_barcodes.columns[df_barcodes.sum(axis=0) == 0])
+        min_values = df_barcodes[list(fp)].min(axis=1)
+        df_barcodes[fp[0]] = df_barcodes[fp[0]].subtract(min_values, axis=0)
+        df_barcodes[fp[1]] = df_barcodes[fp[1]].subtract(min_values, axis=0)
+
+    unused_columns = df_barcodes.columns[df_barcodes.sum(axis=0) == 0]
+    print("Dropping unused columns:", unused_columns)
+    df_barcodes = df_barcodes.drop(columns=unused_columns)
+
     return df_barcodes
 
 

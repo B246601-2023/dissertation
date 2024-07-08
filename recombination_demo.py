@@ -137,8 +137,8 @@ def main():
     sequences = read_sequences(fasta_name)
 
     # generate 'low' and 'high' recombinants
-    low_recombinants = generate_recombinant_sequences(sequences,3,"low",lineage_list)
-    high_recombinants = generate_recombinant_sequences(sequences,3,"high",lineage_list)
+    low_recombinants = generate_recombinant_sequences(sequences,1,"low",lineage_list)
+    high_recombinants = generate_recombinant_sequences(sequences,1,"high",lineage_list)
     all_recombinants = low_recombinants + high_recombinants
     
     # for recombinant in all_recombinants:

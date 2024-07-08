@@ -78,3 +78,4 @@ ls $splitdir | grep individual_seq | parallel -j $threads --bar "profile_align {
 # note that here we *APPEND* to the global alignment, which allows us to add small batches of new stuff whenever we like
 find $splitdir -name \*.fa_ind_aligned.fa -exec cat {} \; >> $outputfasta
 find $splitdir -maxdepth 1 -name "individual_seq*" -delete
+rm $refaln

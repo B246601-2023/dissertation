@@ -21,7 +21,7 @@ mutation_rates = {
 
 # function to ajdust branch length
 # eg. 0.5x 1x(origin) 10x 100x 
-def adjust_branch_lengths(tree_file, factors=[0.01, 0.1, 0.5, 1, 5, 10, 1000]):
+def adjust_branch_lengths(tree_file, factors=[0.0001, 0.001, 0.01, 0.1, 1.0, 10.0]):
     
     scaled_trees = {}
     name, _ = os.path.splitext(os.path.basename(tree_file))
@@ -34,7 +34,7 @@ def adjust_branch_lengths(tree_file, factors=[0.01, 0.1, 0.5, 1, 5, 10, 1000]):
 def generate_sequences(tree_dict, out_dir, mutation_rates):
     for name, tree in tree_dict.items():
         model = pyvolve.Model("nucleotide", {"mu": mutation_rates})
-        partition = pyvolve.Partition(models=model, size=20000)  # Using a size of 10,000 as an example
+        partition = pyvolve.Partition(models=model, size=1000)  # Using a size of 10,000 as an example
         evolver = pyvolve.Evolver(tree=tree, partitions=partition)
         # Ensure output directory exists
         os.makedirs(out_dir, exist_ok=True)
