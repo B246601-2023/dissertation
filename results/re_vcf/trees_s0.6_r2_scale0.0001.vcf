@@ -1,0 +1,4 @@
+##fileformat=VCFv4.2
+##reference=trees_s0.6_r2_scale0.0001_alignment.fa:root
+##source=faToVcf trees_s0.6_r2_scale0.0001_alignment.fa trees_s0.6_r2_scale0.0001.vcf
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	root	L.1.1.2XL.1.3_high_1	L.1.3XL.1.4_low_1	L.1.1XL.1.3_high_1

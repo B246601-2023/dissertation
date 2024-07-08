@@ -1,0 +1,40 @@
+##fileformat=VCFv4.2
+##reference=trees_s0.1_r3_scale0.01_alignment.fa:root
+##source=faToVcf trees_s0.1_r3_scale0.01_alignment.fa trees_s0.1_r3_scale0.01.vcf
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	root	L.1.1XL.4_low_1	L.1XL.5.1_high_1
+root	10	T10G	T	G	.	.	AC=2;AN=3	GT	0	1	1
+root	54	T54C	T	C	.	.	AC=1;AN=3	GT	0	1	0
+root	65	G65T	G	T	.	.	AC=1;AN=3	GT	0	1	0
+root	68	C68G	C	G	.	.	AC=1;AN=3	GT	0	0	1
+root	80	T80G	T	G	.	.	AC=1;AN=3	GT	0	1	0
+root	88	T88C	T	C	.	.	AC=1;AN=3	GT	0	1	0
+root	110	T110G	T	G	.	.	AC=1;AN=3	GT	0	0	1
+root	111	C111T	C	T	.	.	AC=2;AN=3	GT	0	1	1
+root	119	T119G	T	G	.	.	AC=1;AN=3	GT	0	0	1
+root	125	T125G	T	G	.	.	AC=1;AN=3	GT	0	0	1
+root	159	C159T	C	T	.	.	AC=1;AN=3	GT	0	1	0
+root	161	T161C	T	C	.	.	AC=1;AN=3	GT	0	1	0
+root	164	G164A	G	A	.	.	AC=1;AN=3	GT	0	0	1
+root	250	G250T	G	T	.	.	AC=2;AN=3	GT	0	1	1
+root	261	T261G	T	G	.	.	AC=2;AN=3	GT	0	1	1
+root	345	C345T	C	T	.	.	AC=2;AN=3	GT	0	1	1
+root	377	T377C	T	C	.	.	AC=1;AN=3	GT	0	1	0
+root	476	T476G	T	G	.	.	AC=2;AN=3	GT	0	1	1
+root	481	G481T	G	T	.	.	AC=2;AN=3	GT	0	1	1
+root	513	C513T	C	T	.	.	AC=2;AN=3	GT	0	1	1
+root	621	T621G	T	G	.	.	AC=1;AN=3	GT	0	0	1
+root	642	T642G	T	G	.	.	AC=1;AN=3	GT	0	0	1
+root	650	T650G	T	G	.	.	AC=1;AN=3	GT	0	0	1
+root	667	T667G	T	G	.	.	AC=1;AN=3	GT	0	0	1
+root	671	G671T	G	T	.	.	AC=1;AN=3	GT	0	0	1
+root	690	G690T	G	T	.	.	AC=1;AN=3	GT	0	0	1
+root	692	T692C	T	C	.	.	AC=2;AN=3	GT	0	1	1
+root	744	C744T	C	T	.	.	AC=1;AN=3	GT	0	0	1
+root	745	T745G	T	G	.	.	AC=1;AN=3	GT	0	0	1
+root	761	C761T	C	T	.	.	AC=1;AN=3	GT	0	1	0
+root	771	C771T	C	T	.	.	AC=1;AN=3	GT	0	1	0
+root	796	T796C	T	C	.	.	AC=1;AN=3	GT	0	1	0
+root	846	G846T	G	T	.	.	AC=1;AN=3	GT	0	1	0
+root	855	T855C	T	C	.	.	AC=1;AN=3	GT	0	0	1
+root	953	G953T	G	T	.	.	AC=1;AN=3	GT	0	1	0
+root	962	C962T	C	T	.	.	AC=1;AN=3	GT	0	0	1
