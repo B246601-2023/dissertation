@@ -57,6 +57,7 @@ process convert_tovcf {
     """
 }
 
+
 workflow{
     tree_files = Channel.fromPath("${projectDir}/results/autolin_check/modified_tree/*.nh")
     recombination = recombine_generate(tree_file = tree_files)
