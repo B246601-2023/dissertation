@@ -4,7 +4,7 @@ nextflow.enable.dsl=2
 
 // 定义通用参数
 params.output_dir = "results"
-params.num_tips = 100
+params.num_tips = 10000
 params.sd_min = 0.0
 params.sd_max = 1
 params.sd_step = 0.1
@@ -76,9 +76,7 @@ process generateSequences {
     script:
     """
     mkdir -p sequences
-    for tree in ${projectDir}/results/selected_trees/*.tre; do
-        python3 ${projectDir}/generate_sequences.py --tree \$tree --out "sequences/"
-    done
+    python3 ${projectDir}/generate_sequences.py --tree ${selected_tree_files} --out "sequences/"
     """
 }
 
@@ -147,7 +145,7 @@ workflow {
     )
 
     sequences = generateSequences(
-        selected_tree_files=selected_tree_files
+        selected_tree_files=selected_tree_files.flatten()
     )
 
     checkSequences(
