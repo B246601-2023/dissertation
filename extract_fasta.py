@@ -10,15 +10,20 @@ def extract_and_filter_fasta_sequence(input_file, output_dir, seq_dir, target_se
     output_file = os.path.join(output_dir, f"{base_name}_root.fa")
     filtered_output_file = os.path.join(seq_dir, f"{base_name}.fa")
     
+    unique_sequences = {}  # 用于存储唯一序列
+
     with open(input_file, 'r') as infile, open(output_file, 'w') as outfile, open(filtered_output_file, 'w') as filtered_outfile:
         for record in SeqIO.parse(infile, "fasta"):
             if record.id == target_sequence:
                 SeqIO.write(record, outfile, "fasta")
             if record.id.startswith('T') or record.id.startswith('root'):
-                SeqIO.write(record, filtered_outfile, "fasta")
+                seq_str = str(record.seq)
+                if seq_str not in unique_sequences:
+                    unique_sequences[seq_str] = record
+                    SeqIO.write(record, filtered_outfile, "fasta")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Extract a specific sequence from a FASTA file and filter sequences.")
+    parser = argparse.ArgumentParser(description="Extract a specific sequence from a FASTA file and filter sequences, removing duplicates.")
     parser.add_argument("--input", required=True, help="Input FASTA file.")
     parser.add_argument("--out_dir", required=True, help="Output directory for the target sequence.")
     parser.add_argument("--seq_dir", required=True, help="Output directory for the filtered sequences.")
