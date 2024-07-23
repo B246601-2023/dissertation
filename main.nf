@@ -4,7 +4,7 @@ nextflow.enable.dsl=2
 
 // 定义通用参数
 params.output_dir = "results"
-params.num_tips = 10000
+params.num_tips = 200
 params.sd_min = 0.0
 params.sd_max = 1
 params.sd_step = 0.1
@@ -13,6 +13,7 @@ params.seed = 42
 
 
 process simulateTrees {
+    conda '/home/weiwen/envs/tree'
     publishDir "${params.output_dir}/trees", mode: 'copy'
 
     input:
@@ -29,11 +30,12 @@ process simulateTrees {
 
     script:
     """
-    python3 ${projectDir}/simulate_trees.py --num_tips ${num_tips} --sd_min ${sd_min} --sd_max ${sd_max} --sd_step ${sd_step} --reps ${reps} --out ${out} --seed ${seed}
+    python3 ${projectDir}/simulate_trees_modify.py --num_tips ${num_tips} --sd_min ${sd_min} --sd_max ${sd_max} --sd_step ${sd_step} --reps ${reps} --out ${out} --seed ${seed}
     """
 }
 
 process selectAndCleanTrees {
+    conda '/home/weiwen/envs/tree'
     publishDir "${params.output_dir}", mode: 'copy'
 
     input:
@@ -49,6 +51,7 @@ process selectAndCleanTrees {
 }
 
 process rescaleTrees {
+    conda '/home/weiwen/envs/tree'
     publishDir "${params.output_dir}", mode: 'copy'
 
     input:
@@ -65,6 +68,7 @@ process rescaleTrees {
 }
 
 process generateSequences {
+    conda '/home/weiwen/envs/tree'
     publishDir "${params.output_dir}", mode: 'copy'
 
     input:
@@ -80,41 +84,40 @@ process generateSequences {
     """
 }
 
-process checkSequences {
-    publishDir "${params.output_dir}/check_plots", mode: 'copy'
+// process checkSequences {
+//     publishDir "${params.output_dir}/check_plots", mode: 'copy'
 
-    input:
-    path fasta_files
+//     input:
+//     path tree
+//     path fasta
 
-    output:
-    path "*"
+//     output:
+//     path "*"
 
-    script:
-    """
-    for tree in ${projectDir}/results/selected_trees/*.tre; do
-        python3 ${projectDir}/check_seq.py --tree \$tree --fasta_dir ${projectDir}/results/sequences
-    done
-    """
-}
+//     script:
+//     """
+//     python3 ${projectDir}/check_seq.py --tree ${tree} --fasta_dir ${projectDir}/results/sequences
+//     """
+// }
 
-process extractSequence {
-    conda '/home/weiwen/envs/tree'
+// process extractSequence {
+//     conda '/home/weiwen/envs/tree'
 
-    publishDir "${params.output_dir}", mode: 'copy'
+//     publishDir "${params.output_dir}", mode: 'copy'
 
-    input:
-    path fasta_file
+//     input:
+//     path fasta_file
     
 
-    output:
-    path "ref/*.fa"
-    path "sequences_clean/*"
+//     output:
+//     path "ref/*.fa"
+//     path "sequences_clean/*"
 
-    script:
-    """
-    python3 ${projectDir}/extract_fasta.py --input ${fasta_file} --out_dir ref --seq_dir sequences_clean --target_sequence root
-    """
-}
+//     script:
+//     """
+//     python3 ${projectDir}/extract_fasta.py --input ${fasta_file} --out_dir ref --seq_dir sequences_clean --target_sequence root
+//     """
+// }
 
 
 workflow {
@@ -148,11 +151,11 @@ workflow {
         selected_tree_files=selected_tree_files.flatten()
     )
 
-    checkSequences(
-        fasta_files = sequences
-    )
+    // checkSequences(
+    //     fasta = sequences, tree = selected_tree_files.flatten()
+    // )
 
-    extractSequence(fasta_file = sequences.flatten())
+    // extractSequence(fasta_file = sequences.flatten())
 
     //align = generateAlignments(fasta_file=sequences.flatten(), ref = refs)
 

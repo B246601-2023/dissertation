@@ -69,26 +69,27 @@ def simulate_recombination(parent1, parent2, num_event):
     new_seq += parent2[last_point:] if switch else parent1[last_point:]
     return new_seq
 
-def generate_recombinant_sequences(sequences, rep, group, lineage_list):
+def generate_recombinant_sequences(sequences, lineage_list):
     # get the number of recombinants 
-    if group == "low":
-        prob = 0.12
-    elif group == "high":
-        prob = 0.50
+    prob = 0.50
     
-    #unique_lineages = lineage_list['lineage_name'].unique()
     lineage_num = lineage_list['Lineage'].unique().shape[0]
     #print(f"all lineages num : {lineage_num}")
-    recombinant_num = math.floor((1 - prob) * (prob * lineage_num)) 
+    recombinant_num = math.ceil((prob * lineage_num)/(1-prob)) 
+    recombinant_num_low = math.ceil((0.12 * lineage_num)/(1-0.12))
     #print(f"recombinant_num:{recombinant_num}")
-    if recombinant_num == 0:
-        recombinant_num = 1
+    # if recombinant_num == 0:
+    #     recombinant_num = 1
 
     # decide which lineages are used to generate recombinants
     unique_lineages = lineage_list['Lineage'].unique()
     all_combinations = list(itertools.combinations(unique_lineages, 2))
     #print(f"all_combine:{all_combinations}")
-    re_lineage = random.sample(all_combinations, recombinant_num)
+    if recombinant_num >= len(all_combinations):
+        re_lineage = all_combinations
+        recombinant_num_low = len(re_lineage)
+    else:
+        re_lineage = random.sample(all_combinations, recombinant_num)
 
     # list to restore recombinants
     recombinants = []
@@ -96,20 +97,18 @@ def generate_recombinant_sequences(sequences, rep, group, lineage_list):
     for tuple in re_lineage :
         l1_seq = group_sequences(lineage_list, tuple[0], sequences)
         l2_seq = group_sequences(lineage_list, tuple[1], sequences)
-        group_name = f"{tuple[0]}X{tuple[1]}_{group}"
+        group_name = f"{tuple[0]}X{tuple[1]}"
 
-    # generate repeated recombinants
-        for i in range(rep):
-            parent1 = random.sample(l1_seq, 1)[0]
-            parent2 = random.sample(l2_seq, 1)[0]
-            events_range = (1,5)
-            new_seq_str = simulate_recombination(str(parent1.seq), str(parent2.seq), random.choice(events_range))
-            new_seq = Seq(new_seq_str)
-            recombinant_id = f"{group_name}_{i+1}"
-            recombinant = SeqRecord(new_seq, id=recombinant_id, description=f"recombination_group:{group}")
-            recombinants.append(recombinant)
+        parent1 = random.sample(l1_seq, 1)[0]
+        parent2 = random.sample(l2_seq, 1)[0]
+        events_range = (1,5)
+        new_seq_str = simulate_recombination(str(parent1.seq), str(parent2.seq), random.choice(events_range))
+        new_seq = Seq(new_seq_str)
+        recombinant_id = f"{group_name}"
+        recombinant = SeqRecord(new_seq, id=recombinant_id, description=f"recombination_group:high")
+        recombinants.append(recombinant)
     
-    return recombinants
+    return recombinants,recombinant_num_low
 
 # add recombinants information to lineage lists
 def add_recombinant_info(recombinants,lineage_list):
@@ -118,7 +117,6 @@ def add_recombinant_info(recombinants,lineage_list):
         lineage = rec.id.split("_")[0].strip()
         lineage_list.loc[len(lineage_list.index)] = [lineage,rec_id]
     return lineage_list
-
 
 def main():
     parser = argparse.ArgumentParser(description="Generate recombinants from a phylogenetic tree.")
@@ -129,27 +127,38 @@ def main():
     # file name preparation
     basename = os.path.basename(args.tree).replace("_annoted.nh","") #tree/fasta name preparation
     fasta_name = os.path.join(args.fasta_dir,basename+"_seqfile.fa")
-    out_fasta = basename+"_seqfile.fa"
-    out_csv = basename+"_lineages.csv"
 
     # parse tree file
     lineage_list = find_lineages_and_tips(args.tree)
+    if lineage_list['Lineage'].nunique() == 0 :
+        open('empty.fa', 'w').close()
+        open('empty.csv', 'w').close()
+        print("Only one unique lineage found. Created empty files and exiting.")
+        return
+
     sequences = read_sequences(fasta_name)
 
     # generate 'low' and 'high' recombinants
-    low_recombinants = generate_recombinant_sequences(sequences,1,"low",lineage_list)
-    high_recombinants = generate_recombinant_sequences(sequences,1,"high",lineage_list)
-    all_recombinants = low_recombinants + high_recombinants
+    high_recombinants,low_num = generate_recombinant_sequences(sequences,lineage_list)
+    low_recombinants = random.sample(high_recombinants, low_num)
     
-    # for recombinant in all_recombinants:
-    #     sequences[recombinant.id] = recombinant
+    # Write low recombinants
+    low_fasta = f"{basename}_lowre_seqfile.fa"
+    write_sequences([sequences['root']] + low_recombinants, low_fasta)
 
-    output_sequences = [sequences['root']]  # Start with the 'root' sequence
-    output_sequences += all_recombinants   # Add all recombinant sequences
-    write_sequences(output_sequences, out_fasta)
+    # Write high recombinants
+    high_fasta = f"{basename}_highre_seqfile.fa"
+    write_sequences([sequences['root']] + high_recombinants, high_fasta)
+    # # for recombinant in all_recombinants:
+    # #     sequences[recombinant.id] = recombinant
+
+    # output_sequences = [sequences['root']]  # Start with the 'root' sequence
+    # output_sequences += all_recombinants   # Add all recombinant sequences
+    # write_sequences(output_sequences, out_fasta)
     
-    # update lineages csv and save
-    lineage_list = add_recombinant_info(all_recombinants,lineage_list)
+    # Update lineage CSVs and save
+    lineage_list = add_recombinant_info(high_recombinants, lineage_list)
+    out_csv = basename+"_lineages.csv"
     lineage_list.to_csv(out_csv, index=False)
 
 if __name__ == "__main__":

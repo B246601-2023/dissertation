@@ -25,47 +25,49 @@ process autolin {
 
     conda '/home/weiwen/envs/autolin'
 
-    publishDir "${params.output_dir}/annotated_trees_pb", mode: 'copy'
+    // publishDir "${params.output_dir}/annotated_trees_pb", mode: 'copy'
 
     input:
     path pb_gz
 
     output:
-    path "*.pb"
+    path "*.clade", emit : clade
+    path "*.pb", emit : pb
 
     script:
     """
     name=\$(basename ${pb_gz} .pb.gz)
-    python3 ${projectDir}/propose_sublineages.py --input ${pb_gz} -o \${name}_annoted.pb  --recursive -t 0 -f 0
+    python3 ${projectDir}/propose_sublineages.py --input ${pb_gz} -o \${name}_annoted.pb  --recursive -t 1 -f 0 -m 1 -l \${name}.clade
     """
     
 }
 
-process extract_trees{
-    conda '/home/weiwen/envs/usher-env'
+// process extract_trees{
+//     conda '/home/weiwen/envs/usher-env'
 
-    publishDir "${params.output_dir}/annotated_trees_nh", mode: 'copy'
+//     publishDir "${params.output_dir}/annotated_trees_nh", mode: 'copy'
 
-    input:
-    path pb_file
+//     input:
+//     path pb_file
 
-    output:
-    path "*"
+//     output:
+//     path "*"
 
-    script:
-    """
-    name=\$(basename ${pb_file} .pb)
-    matUtils extract -i ${pb_file} -t \${name}.nh
-    """
-}
+//     script:
+//     """
+//     name=\$(basename ${pb_file} .pb)
+//     matUtils extract -i ${pb_file} -t \${name}.nh
+//     """
+// }
 
 process extract_txt{
     conda '/home/weiwen/envs/usher-env'
 
-    publishDir "${params.output_dir}/annotated_txt", mode: 'copy'
+    publishDir "${params.output_dir}/annotated_trees", mode: 'copy'
 
     input:
     path pb_file
+    path clade
 
     output:
     path "*.txt"
@@ -73,7 +75,8 @@ process extract_txt{
     script:
     """
     name=\$(basename ${pb_file} .pb)
-    matUtils extract -i ${pb_file} -C \${name}.txt
+    c=\$(awk '{print \$1}' ${clade} | paste -sd, -)
+    matUtils extract -i ${pb_file} -c \${c} -C \${name}.txt -W 50 -o ${pb_file} -t \${name}.tre  
     """
 }
 
@@ -119,9 +122,9 @@ workflow {
 
     annotated_trees_pb = autolin(pb_gz = pb_gz.flatten())
 
-    nh_trees = extract_trees(pb_file = annotated_trees_pb.flatten())
+    nh_trees = extract_trees(pb_file = annotated_trees_pb.pb.flatten())
 
-    annotations = extract_txt(pb_file = annotated_trees_pb.flatten())
+    annotations = extract_txt(pb_file = annotated_trees_pb.pb.flatten(),clade = annotated_trees_pb.clade.flatten())
 
     check_results= autolin_check(txt_file = annotations.flatten())
 

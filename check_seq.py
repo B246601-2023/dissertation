@@ -83,7 +83,7 @@ def calculate_distances(fasta_file, df):
 def plot_distances(name, df_sample, df_box, scales,fasta_dir):
     fig, ax = plt.subplots(1, 2, figsize=(14, 7))
     
-    hamming = calculate_distances(f"{fasta_dir}/{name}_scale1.0_seqfile.fasta", df_sample)
+    hamming = calculate_distances(f"{fasta_dir}/{name}_scale1.0_seqfile.fa", df_sample)
     # Plot phylogenetic vs Hamming distance
     ax[0].scatter(hamming['Phylogenetic Distance'], hamming['Hamming Distance'])
     ax[0].set_xscale("log")
@@ -95,7 +95,7 @@ def plot_distances(name, df_sample, df_box, scales,fasta_dir):
     # Boxplot of different scales
     distance = []
     for x in scales :
-        df = calculate_distances(f"{fasta_dir}/{name}_scale{x}_seqfile.fasta", df_box)
+        df = calculate_distances(f"{fasta_dir}/{name}_scale{x}_seqfile.fa", df_box)
         distance.append([d for d in df['Hamming Distance'] if d is not None])
     
     scale_labels = [f"{x}x" for x in scales]
@@ -119,6 +119,7 @@ def main():
     df_sample,df_box = calculate_phylogenetic_distance(tree)
     scales = [0.0001, 0.001, 0.01, 0.1, 1.0, 10.0]
     name, _ = os.path.splitext(os.path.basename(args.tree))
+    print(name)
     plot_distances(name,df_sample,df_box,scales,args.fasta_dir)
 
 if __name__ == "__main__":

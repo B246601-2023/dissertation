@@ -8,7 +8,7 @@ params.output_dir = "results"
 process recombine_generate {
     conda '/home/weiwen/envs/tree'
     publishDir "${params.output_dir}/recombination", mode: 'copy'    
-
+    
     input:
     path tree_file
 
@@ -24,7 +24,11 @@ process recombine_generate {
 
 process align {
     conda '/home/weiwen/envs/usher-env'
+    errorStrategy { task.exitStatus == 0 ? 'ignore' : 'retry' }
     
+    cpus 2
+    memory '6 GB'
+
     input:
     path fasta_file
 
@@ -35,7 +39,11 @@ process align {
     """
     name=\$(basename ${fasta_file} .fa)
     outname=\${name/_seqfile/_alignment.fa}
-    ${projectDir}/global_align.sh -i ${fasta_file} -o \${outname} -t 4 -r root
+    if [[ "${fasta_file}" != *empty* ]]; then
+        ${projectDir}/global_align.sh -i ${fasta_file} -o \${outname} -t 2 -r root
+    else
+        touch \${outname}
+    fi
     """
 }
 

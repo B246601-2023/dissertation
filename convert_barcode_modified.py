@@ -4,6 +4,7 @@ import shutil
 import os
 import subprocess
 import sys
+import re
 
 def basic_barcode(pb_path):
     os.makedirs("barcode_tmp", exist_ok=True)
@@ -184,8 +185,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process some barcodes.')
     parser.add_argument('--input', type=str, help='Input pb file path')
     parser.add_argument('--vcf', type=str, help='Input vcf file')
-    parser.add_argument('--outname', type=str, help='Output file name')
+    #parser.add_argument('--outname', type=str, help='Output file name')
     args = parser.parse_args()
+
+
+    outname = os.path.basename(args.vcf)
+    outname = re.sub(r'_(lowre|highre)\.vcf$', '', outname)
 
     #get basic barcodes by freyja
     basic_barcode(args.input)
@@ -206,8 +211,13 @@ if __name__ == '__main__':
     df_barcodes = pd.read_csv("re_barcode.csv")
     df_results = merge_barcode(df_basic, df_barcodes)
 
-    df_results.to_csv(args.outname+".csv")
-    df_results.reset_index().to_feather(args.outname+".feather")
+    # if "lowre" in args.vcf:
+    #     suffix = "_low_barcode"
+    # elif "highre" in args.vcf:
+    #     suffix = "_high_barcode"
+    
+    df_results.to_csv(outname+".csv")
+    df_results.reset_index().to_feather(outname+".feather")
 
     delete_folder("re_tree")
     delete_folder("barcode_tmp")
