@@ -18,13 +18,14 @@ def color_subtree(node, color):
         n.set_style(nstyle)
 
 def apply_color_based_on_labels(tree):
-    """Applies colors to nodes based on their labels."""
+    """Applies colors to nodes based on their labels, excluding nodes with '_' in their names."""
     for node in tree.traverse():
-        if node.name and node.name.startswith("L."):
-            color = "#%06x" % random.randint(0, 0xFFFFFF)
-            color_subtree(node, color)
-            face = TextFace(node.name, fgcolor=color)
-            node.add_face(face, column=0, position="branch-right")
+        # Check if the node has a name, it starts with "L.", and does not contain '_'
+        if node.name and node.name.startswith("L.") and '_' not in node.name:
+            color = "#%06x" % random.randint(0, 0xFFFFFF)  # Generate a random color
+            color_subtree(node, color)  # Apply color to the subtree
+            face = TextFace(node.name, fgcolor=color)  # Create a TextFace with the node's name in the specified color
+            node.add_face(face, column=0, position="branch-right")  # Add the TextFace to the node
 
 def layout(node):
     """Custom layout function to align leaf names to the right."""
