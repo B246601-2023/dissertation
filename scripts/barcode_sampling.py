@@ -4,6 +4,7 @@ import random
 import argparse
 import pandas as pd
 import numpy as np
+import math
 
 
 def main(args):
@@ -19,12 +20,16 @@ def main(args):
         np.random.seed(None)
 
     # Read barcodes file
-    try:
-        bcs = pd.read_csv(args.barcodes)
-        print(f"Barcode dataset loaded from: {args.barcodes}")
-    except FileNotFoundError:
-        print(f"Error: The file {args.barcodes} does not exist.")
-        sys.exit(1)
+    # try:
+    #     bcs = pd.read_csv(args.barcodes)
+    #     if bcs.columns[0] == "Unnamed: 0.1" :
+    #         bcs = bcs.drop(bcs.columns[0], axis=1)
+    #         bcs.rename(columns={'Unnamed: 0': 'index'}, inplace=True)
+    #     print(f"Barcode dataset loaded from: {args.barcodes}")
+    # except FileNotFoundError:
+    #     print(f"Error: The file {args.barcodes} does not exist.")
+    #     sys.exit(1)
+    bcs, bcs_recombine = read_and_process_barcodes(args.barcodes)
 
     for i in range(1, args.replicates+1):
         # If not fixed num_lineages, sample num_lineages from uniform dist
@@ -36,19 +41,41 @@ def main(args):
         print(f"Replicate {i} sampled {n} lineages...")
 
         # Sample lineages and assign frequencies
-        lin_freqs = sample_lineages(bcs, n, args.dist,
-                                    args.alpha)
+        if args.high :
+            bcs = pd.concat([bcs, bcs_recombine])
+            lin_freqs = sample_lineages(bcs, n, args.dist,
+                                    args.alpha, False)
+        elif args.low :
+            lineage_num = bcs['index'].nunique()
+            recombinant_num_low = math.ceil((0.12 * lineage_num)/(1-0.12))
+            bcs_low = bcs_recombine.sample(n=recombinant_num_low, random_state=3)
+            bcs = pd.concat([bcs, bcs_low])
+            lin_freqs = sample_lineages(bcs, n, args.dist, args.alpha, False)
+        else :
+            lin_freqs = sample_lineages(bcs, n, args.dist,
+                                    args.alpha, args.cluster)
 
         # Compute SNV frequencies
-        snv_freqs = compute_snv_frequencies(bcs, lin_freqs)
+        try:
+            snv_freqs = compute_snv_frequencies(bcs, lin_freqs,False)
+        except IndexError as e:
+            variant_file = f"empty.variants.tsv"
+            lineage_file = f"empty.known_lineages.tsv"
+            with open(variant_file,'w') as file :
+                file.write("empty")
+            lin_freqs_df = pd.DataFrame.from_dict(lin_freqs, orient='index',
+                                              columns=['Frequency'])
+            lin_freqs_df.index.name = 'Lineage'
+            lin_freqs_df.to_csv(lineage_file, sep='\t')
+            continue
 
         # Convert SNV frequencies to pandas DataFrame
         snv_df = to_variants_table(snv_freqs, reference=args.ref,
                                    fixed_depth=args.depth)
 
         # Create output file names
-        variant_file = f"{args.out}_rep{i+1}.variants.tsv"
-        lineage_file = f"{args.out}_rep{i+1}.known_lineages.tsv"
+        variant_file = f"{args.out}_rep{i}.variants.tsv"
+        lineage_file = f"{args.out}_rep{i}.known_lineages.tsv"
 
         # Write the variants table to file
         snv_df.to_csv(variant_file, sep='\t', index=False)
@@ -61,6 +88,39 @@ def main(args):
 
     print(f"Done! Wrote outputs using prefix {args.out}")
 
+
+def read_and_process_barcodes(filepath):
+    """
+    Reads a barcode file, handles unexpected index columns, and separates rows
+    with 'X' in the 'index' column.
+
+    Parameters:
+    filepath (str): Path to the barcode CSV file.
+
+    Returns:
+    tuple: A tuple containing the cleaned main DataFrame and a DataFrame of rows
+           with 'X' in the 'index' column.
+    """
+    try:
+        # read files
+        bcs = pd.read_csv(filepath)
+        print(f"Barcode dataset loaded from: {filepath}")
+
+        # check if 'unnamed' exsists and deal it
+        if bcs.columns[0] == "Unnamed: 0.1":
+            bcs.drop(bcs.columns[0], axis=1, inplace=True)
+        if 'Unnamed: 0' in bcs.columns:
+            bcs.rename(columns={'Unnamed: 0': 'index'}, inplace=True)
+
+        # delete row with 'X'
+        rows_with_x = bcs[bcs['index'].str.contains('X', na=False)]
+        bcs = bcs[~bcs['index'].str.contains('X', na=False)]
+
+        return bcs, rows_with_x
+
+    except FileNotFoundError:
+        print(f"Error: The file {filepath} does not exist.")
+        sys.exit(1)
 
 def to_variants_table(snv_freqs, reference="SPOOF", fixed_depth=1000):
     """
@@ -108,7 +168,12 @@ def to_variants_table(snv_freqs, reference="SPOOF", fixed_depth=1000):
             })
 
     snv_df = pd.DataFrame(data)
-    snv_df = snv_df.sort_values(by='POS')
+        # Check if 'POS' column exists before sorting
+    if 'POS' in snv_df.columns:
+        snv_df = snv_df.sort_values(by='POS')
+    else:
+        print("Error: 'POS' column not found in the DataFrame.")
+    #snv_df = snv_df.sort_values(by='POS')
 
     return snv_df
 
@@ -130,8 +195,15 @@ def compute_snv_frequencies(bcs, lineage_freqs, filter=True):
     snv_freqs = {}
 
     for lineage, freq in lineage_freqs.items():
+        # # exit when barcode is null
+        # filtered_bcs = bcs[bcs.iloc[:, 0] == lineage]
+        # if filtered_bcs.empty or filtered_bcs.columns.size == 0:
+        #     print(f"Error: No data found for lineage: {lineage}")
+        #     sys.exit(0)
+
         lineage_snv = bcs[bcs.iloc[:, 0] == lineage].iloc[:, 1:].to_dict(
             orient='records')[0]
+
         for snv, snv_freq in lineage_snv.items():
             pos = int(snv[1:-1])
             ref = snv[0]
@@ -156,11 +228,12 @@ def compute_snv_frequencies(bcs, lineage_freqs, filter=True):
         }
     # Sort the dictionary by position
     snv_freqs = dict(sorted(snv_freqs.items()))
-
+    #print("snv_freqs:")
+    #print(snv_freqs)
     return snv_freqs
 
 
-def sample_lineages(bcs, num_lineages, frequency_distribution, alpha):
+def sample_lineages(bcs, num_lineages, frequency_distribution, alpha, cluster):
     """
     Samples lineages from the given barcodes dataframe and assigns frequencies
     based on the specified distribution type.
@@ -180,11 +253,24 @@ def sample_lineages(bcs, num_lineages, frequency_distribution, alpha):
     Raises:
     ValueError: If an invalid frequency distribution type is provided.
     """
-    sampled_bcs = bcs.sample(num_lineages)
+    if cluster :
+        bcs_clean = bcs[~bcs['index'].str.contains('X', na=False)]
+        bcs_clean['group'] = bcs_clean['index'].apply(lambda x: x.split('_')[0])
+        grouped_bcs = {k: v.drop('group', axis=1) for k, v in bcs_clean.groupby('group')}
+        bcs_sets = [df for df in grouped_bcs.values() if len(df) > num_lineages]
+        if bcs_sets:
+            sampled_bcs = random.choice(bcs_sets)
+        else:
+            bcs_sets_2 = [df for df in grouped_bcs.values() if len(df) > 1]
+            sampled_bcs = random.choice(bcs_sets_2)
+            num_lineages = len(sampled_bcs)
+
+    else :
+        sampled_bcs = bcs.sample(num_lineages)
 
     if frequency_distribution == 'uniform':
         frequencies = np.ones(num_lineages) / num_lineages  # Balanced
-    elif frequency_distribution == 'dirichlet':
+    elif frequency_distribution == 'skewed':
         alpha = np.linspace(alpha, 1, num_lineages)  # Skewed
         frequencies = np.random.dirichlet(alpha)
     else:
@@ -207,6 +293,21 @@ if __name__ == "__main__":
     parser.add_argument(
         '-b', '--barcodes', type=str, required=True,
         help='Freyja barcodes database file'
+    )
+    parser.add_argument(
+        '-H', '--high',
+        action='store_true',  
+        help='Enable high rate recombinants in samples'
+    )
+    parser.add_argument(
+        '-l', '--low',
+        action='store_true',  
+    help='Enable low rate recombinants in samples'
+    )
+    parser.add_argument(
+        '-c', '--cluster',
+        action='store_true',  
+        help='Enable phylogenetically clustered samples'
     )
     parser.add_argument(
         '-n', '--num_lineages', type=int, required=False,
