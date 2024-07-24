@@ -45,6 +45,9 @@ ts = TreeStyle()
 apply_color_based_on_labels(tree)
 
 # Visualization settings
+ts.mode = "c"
+ts.arc_start = -180 # 0 degrees = 3 o'clock
+ts.arc_span = 180
 ts.min_leaf_separation = 10
 ts.draw_guiding_lines = True
 ts.show_leaf_name = False

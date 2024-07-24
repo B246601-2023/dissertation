@@ -25,7 +25,7 @@ process autolin {
 
     conda '/home/weiwen/envs/autolin'
 
-    // publishDir "${params.output_dir}/annotated_trees_pb", mode: 'copy'
+    publishDir "${params.output_dir}/annotated_trees_pb", mode: 'copy'
 
     input:
     path pb_gz
@@ -70,13 +70,17 @@ process extract_txt{
     path clade
 
     output:
-    path "*.txt"
+    path "*.clade", emit: clades
+    path "*.sample", emit: samples
+    path "*.pb"
+    path "*.tre", emit: trees
 
     script:
     """
     name=\$(basename ${pb_file} .pb)
+    pbname=\${name/_annoted/_eddit.pb}
     c=\$(awk '{print \$1}' ${clade} | paste -sd, -)
-    matUtils extract -i ${pb_file} -c \${c} -C \${name}.txt -W 50 -o ${pb_file} -t \${name}.tre  
+    matUtils extract -i ${pb_file} -c \${c} -C \${name}.clade -S \${name}.sample -z 50 -o \${pbname} -t \${name}.tre  
     """
 }
 
@@ -86,16 +90,18 @@ process autolin_check{
     publishDir "${params.output_dir}/autolin_check", mode: 'copy'
 
     input:
-    path txt_file
+    path sample
+    path clade
+    path tree
 
     output:
-    path "*.csv" 
+    path "*.txt" 
     path "modified_tree/*", emit: trees
 
     script:
     """
-    name=\$(basename ${txt_file} .txt)
-    python3 ${projectDir}/autolin_compare.py --input ${txt_file} --output \${name}.csv --tree_dir ${projectDir}/results/annotated_trees_nh 
+    name=\$(basename ${sample} .sample)
+    python3 ${projectDir}/autolin_compare.py --sample ${sample} --clade ${clade} --output \${name}.txt --tree ${tree}
     """
 }
 
@@ -122,11 +128,11 @@ workflow {
 
     annotated_trees_pb = autolin(pb_gz = pb_gz.flatten())
 
-    nh_trees = extract_trees(pb_file = annotated_trees_pb.pb.flatten())
+    // nh_trees = extract_trees(pb_file = annotated_trees_pb.pb.flatten())
 
     annotations = extract_txt(pb_file = annotated_trees_pb.pb.flatten(),clade = annotated_trees_pb.clade.flatten())
 
-    check_results= autolin_check(txt_file = annotations.flatten())
+    check_results= autolin_check(sample = annotations.samples.flatten(), clade = annotations.clades.flatten(), tree = annotations.trees.flatten())
 
     plots = colorTree(tree = check_results.trees.flatten())
 }

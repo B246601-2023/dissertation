@@ -22,9 +22,10 @@ process barcode_generation {
     """
     base_name=\$(basename ${vcf} .vcf)
     base_name="\${base_name//_highre/}"
-    pb=/home/weiwen/code/results/annotated_trees_pb/\${base_name}_annoted.pb
+    pb=${projectDir}/results/annotated_trees/\${base_name}_eddit.pb
+    path=${projectDir}/results/autolin_check/\${base_name}_annoted.txt
  
-    python3 ${projectDir}/convert_barcode_modified.py --input \${pb} --vcf ${vcf}
+    python3 ${projectDir}/convert_barcode_modified.py --input \${pb} --path \${path} --vcf ${vcf}
     """
 }
 

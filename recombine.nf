@@ -18,7 +18,8 @@ process recombine_generate {
 
     script:
     """
-    python3 ${projectDir}/recombination_demo.py --tree ${tree_file} --fasta_dir ${projectDir}/results/sequences_clean/
+    name=\$(basename ${tree_file} .tre)
+    python3 ${projectDir}/recombination_demo.py --tree ${tree_file} --fasta_dir ${projectDir}/results/sequences_clean/ --tsv_file ${projectDir}/results/autolin_check/\${name}.txt
     """
 }
 
@@ -67,7 +68,7 @@ process convert_tovcf {
 
 
 workflow{
-    tree_files = Channel.fromPath("${projectDir}/results/autolin_check/modified_tree/*.nh")
+    tree_files = Channel.fromPath("${projectDir}/results/autolin_check/modified_tree/*.tre")
     recombination = recombine_generate(tree_file = tree_files)
     alignments = align(fasta_file = recombination.sequences.flatten())
     vcfs = convert_tovcf(alignment = alignments.flatten())

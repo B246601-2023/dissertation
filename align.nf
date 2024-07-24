@@ -16,19 +16,23 @@ process generateAlignments {
     path fasta_file 
 
     output:
-    path "*"
+    path "*.fa"
 
     script:
     """
-    base_name=\$(basename ${fasta_file} .fa)
-    align_fasta="\${base_name}_align.fa"
-    root_fasta="\${base_name}_root.fa"
-    mafft --thread 2 --auto --keeplength --addfragments ${fasta_file} /home/weiwen/code/results/ref/\${root_fasta} > \${align_fasta}
+    if [[ "${fasta_file}" != *0.0001* ]]; then
+        base_name=\$(basename ${fasta_file} .fa)
+        align_fasta="\${base_name}_align.fa"
+        ${projectDir}/global_align.sh -i ${fasta_file} -o \${align_fasta} -t 2 -r root
+    else
+        touch "empty.fa"
+    fi
     """
 }
 
 process generateVcfs {
     conda '/home/weiwen/envs/usher-env'
+    errorStrategy 'ignore'
 
     publishDir "${params.output_dir}/vcf", mode: 'copy'
 
@@ -42,7 +46,7 @@ process generateVcfs {
     """
     base_name=\$(basename ${align} .fa)
     vcf_file="\${base_name/_seqfile_align/.vcf}"
-    faToVcf ${align} \${vcf_file}
+    faToVcf ${align} \${vcf_file} 
     """
 }
 
@@ -62,7 +66,7 @@ process generatePbs {
     base_name=\$(basename ${vcf} .vcf)
     tree_name="\${base_name}.tre"
     pb_name="\${base_name}.pb"
-    usher -t ${projectDir}/results/all_trees/\${tree_name} -v ${vcf} -o \${pb_name}
+    usher -t ${projectDir}/results/trees_clean/\${tree_name} -v ${vcf} -o \${pb_name}
     """
 }
 

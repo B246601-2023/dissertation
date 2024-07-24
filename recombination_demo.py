@@ -11,20 +11,23 @@ import math
 
 # parse tree file first, to get all lineage-tips relationship
 
-def find_lineages_and_tips(file_path):
-    tree = Phylo.read(file_path, 'newick')
-    lineages = {}
-    for clade in tree.find_clades():
-        if clade.name and clade.name.startswith('L.'):
-            lineages[clade.name] = get_tips(clade)
+def find_lineages_and_tips(tree_file, tsv_file):
+    tree = Phylo.read(tree_file, 'newick')
+    tsv_data = pd.read_csv(tsv_file, sep='\t')
+    tsv_data['clade'] = tsv_data['clade'].apply(lambda x: x.replace("auto.", "") if "auto." in x else x)
     
-    # change data to dataframe
+    lineages = {}
+    for clade in tree.get_terminals():
+        if clade.name and clade.name.startswith('L'):
+            tips = tsv_data[tsv_data['clade'] == clade.name]['root_id'].tolist()
+            lineages[clade.name] = tips
+    
     data = []
     for lineage, tips in lineages.items():
         for tip in tips:
             data.append([lineage, tip])
     df = pd.DataFrame(data, columns=['Lineage', 'Tip'])
-    df = df.sort_values(by="Lineage").reset_index(drop=True) 
+    df = df.sort_values(by="Lineage").reset_index(drop=True)
     return df
 
 def get_tips(clade):
@@ -45,11 +48,9 @@ def write_sequences(sequences, file_path):
 
 # group sequences from one lineage, to simplize the comparision, only use "L.x" level
 def group_sequences(lineage_list, lineage_name, sequences):
-    tips = lineage_list.loc[lineage_list.Lineage == lineage_name, ["Tip"]]
-    seq_list = []
-    for value in tips["Tip"].values:
-        seq_list.append(sequences[value])
-    return seq_list
+    tip = lineage_list.loc[lineage_list.Lineage == lineage_name, 'Tip'].values[0]
+    sequence = sequences[tip]
+    return sequence
 
 def simulate_recombination(parent1, parent2, num_event):
     recombination_points = sorted(random.sample(range(1, len(parent1)), num_event))
@@ -74,7 +75,7 @@ def generate_recombinant_sequences(sequences, lineage_list):
     prob = 0.50
     
     lineage_num = lineage_list['Lineage'].unique().shape[0]
-    #print(f"all lineages num : {lineage_num}")
+    print(f"all lineages num : {lineage_num}")
     recombinant_num = math.ceil((prob * lineage_num)/(1-prob)) 
     recombinant_num_low = math.ceil((0.12 * lineage_num)/(1-0.12))
     #print(f"recombinant_num:{recombinant_num}")
@@ -99,8 +100,8 @@ def generate_recombinant_sequences(sequences, lineage_list):
         l2_seq = group_sequences(lineage_list, tuple[1], sequences)
         group_name = f"{tuple[0]}X{tuple[1]}"
 
-        parent1 = random.sample(l1_seq, 1)[0]
-        parent2 = random.sample(l2_seq, 1)[0]
+        parent1 = l1_seq
+        parent2 = l2_seq
         events_range = (1,5)
         new_seq_str = simulate_recombination(str(parent1.seq), str(parent2.seq), random.choice(events_range))
         new_seq = Seq(new_seq_str)
@@ -122,14 +123,15 @@ def main():
     parser = argparse.ArgumentParser(description="Generate recombinants from a phylogenetic tree.")
     parser.add_argument('--tree', type=str, required=True, help="Input tree file")
     parser.add_argument('--fasta_dir', type=str, required=True, help="Input fasta file dir")
+    parser.add_argument('--tsv_file', type=str, required=True, help="TSV file with tip and clade data")
     #parser.add_argument('--out', type=str, required=True, help="Output file name")
     args = parser.parse_args()
     # file name preparation
-    basename = os.path.basename(args.tree).replace("_annoted.nh","") #tree/fasta name preparation
+    basename = os.path.basename(args.tree).replace("_annoted.tre","") #tree/fasta name preparation
     fasta_name = os.path.join(args.fasta_dir,basename+"_seqfile.fa")
 
     # parse tree file
-    lineage_list = find_lineages_and_tips(args.tree)
+    lineage_list = find_lineages_and_tips(args.tree, args.tsv_file)
     if lineage_list['Lineage'].nunique() == 0 :
         open('empty.fa', 'w').close()
         open('empty.csv', 'w').close()

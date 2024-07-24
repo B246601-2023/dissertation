@@ -6,15 +6,34 @@ import subprocess
 import sys
 import re
 
-def basic_barcode(pb_path):
+def basic_barcode(pb_path,mutation_path):
     os.makedirs("barcode_tmp", exist_ok=True)
-    cmd = f"freyja barcode-build --pb {pb_path} --outdir barcode_tmp/ --noncl"
+    cmd = f"freyja barcode-build --pb {pb_path} --path {mutation_path} --outdir barcode_tmp/ --noncl"
     sys.stdout.flush()  
     return_code = subprocess.run(cmd, shell=True, executable="/bin/bash",
                                  stdout=subprocess.DEVNULL,
                                  stderr=subprocess.PIPE)
     if return_code.returncode != 0:
         print(f"Error in basic_barcode: {return_code.stderr.decode('utf-8')}", file=sys.stderr)
+
+    # df = pd.read_csv(mutation_path, sep='\t')
+    # def parse_paths(df):
+    #     df = df.set_index('clade')
+    #     # Make sure to check with new tree versions, lineages could get trimmed.
+    #     df = df.drop_duplicates(keep='last')
+    #     df['from_tree_root'] = df['from_tree_root'].fillna('')
+    #     df['from_tree_root'] = df['from_tree_root']\
+    #     .apply(lambda x: x.replace(' ', '').strip('>').split('>'))
+    #     return df
+    # df = parse_paths(df)
+    # df_barcodes = convert_to_barcodes(df)
+    # df_barcodes = reversion_checking(df_barcodes)
+    # df_barcodes = check_mutation_chain(df_barcodes)
+
+    # df_barcodes.to_csv(os.path.join("barcode_tmp", 'usher_barcodes.csv'))
+    # df_barcodes.reset_index().to_feather(
+    #     os.path.join(locDir, 'usher_barcodes.feather'))
+
     return return_code
 
 def create_lineage_path(pb_path,sample_path):
@@ -185,7 +204,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process some barcodes.')
     parser.add_argument('--input', type=str, help='Input pb file path')
     parser.add_argument('--vcf', type=str, help='Input vcf file')
-    #parser.add_argument('--outname', type=str, help='Output file name')
+    parser.add_argument('--path', type=str, help='Input mutation path file')
     args = parser.parse_args()
 
 
@@ -193,7 +212,7 @@ if __name__ == '__main__':
     outname = re.sub(r'_(lowre|highre)\.vcf$', '', outname)
 
     #get basic barcodes by freyja
-    basic_barcode(args.input)
+    df_basic = basic_barcode(args.input, args.path)
     #create lineage_path file
     create_lineage_path(args.input,args.vcf)
     

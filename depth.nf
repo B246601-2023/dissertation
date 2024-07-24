@@ -24,6 +24,6 @@ process depth_generation{
 }
 
 workflow{
-    fasta_file = Channel.fromPath("${projectDir}/results/recombination/*.fa")
+    fasta_file = Channel.fromPath("${projectDir}/results/sequences_clean/*.fa")
     depth_file = depth_generation(fasta_file=fasta_file)
 }
