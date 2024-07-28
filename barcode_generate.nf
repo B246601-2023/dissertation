@@ -22,10 +22,10 @@ process barcode_generation {
     """
     base_name=\$(basename ${vcf} .vcf)
     base_name="\${base_name//_highre/}"
-    pb=${projectDir}/results/annotated_trees/\${base_name}_eddit.pb
+    pb=${projectDir}/results/vcf/\${base_name}.vcf
     path=${projectDir}/results/autolin_check/\${base_name}_annoted.txt
  
-    python3 ${projectDir}/convert_barcode_modified.py --input \${pb} --path \${path} --vcf ${vcf}
+    python3 ${projectDir}/convert_barcode_modified.py --input \${pb} --path \${path} --re_vcf ${vcf}
     """
 }
 
@@ -50,5 +50,5 @@ process sampling{
 workflow{
     vcf = Channel.fromPath("${projectDir}/results/re_vcf/*_highre.vcf")
     barcodes = barcode_generation(vcf = vcf)
-    samples = sampling(barcode = barcodes.csv.flatten())
+    // samples = sampling(barcode = barcodes.csv.flatten())
 }
